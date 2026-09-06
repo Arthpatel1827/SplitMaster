@@ -1,0 +1,17 @@
+{
+  "name": "Tab - Split Expenses",
+  "short_name": "Tab",
+  "description": "Split expenses with friends, no limits.",
+  "start_url": "/groups/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf8f3",
+  "theme_color": "#1c1b18",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/static/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
