@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Groups from './pages/Groups'
+import GroupDetail from './pages/GroupDetail'
+import ExpenseDetail from './pages/ExpenseDetail'
 
 function RequireAuth({ children }) {
   const { user, loadUser } = useAuth()
@@ -24,6 +26,8 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/groups" element={<RequireAuth><Groups /></RequireAuth>} />
+      <Route path="/groups/:code" element={<RequireAuth><GroupDetail /></RequireAuth>} />
+      <Route path="/groups/:code/expenses/:id" element={<RequireAuth><ExpenseDetail /></RequireAuth>} />
       <Route path="*" element={<Navigate to="/groups" />} />
     </Routes>
   )
