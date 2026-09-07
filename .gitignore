@@ -1,14 +1,18 @@
-venv/
-env/
-__pycache__/
+# Python / Django
+tab/venv/
+tab/__pycache__/
+**/__pycache__/
 *.pyc
-*.pyo
-db.sqlite3
-*.sqlite3
-.env
-staticfiles/
-media/
-*.log
-.vscode/
-.idea/
+tab/db.sqlite3
+tab/.env
+tab/staticfiles/
+tab/media/
+
+# Node / React
+tab-frontend/node_modules/
+tab-frontend/dist/
+tab-frontend/.env
+
+# OS / editor
 .DS_Store
+.vscode/
