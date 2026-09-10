@@ -64,9 +64,12 @@ export default function GroupDetail() {
                     <h1 className="text-xl font-bold">{group.name}</h1>
                     <div className="text-xs text-muted font-mono mt-0.5">{group.code}</div>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-tealbg text-teal flex items-center justify-center text-sm font-semibold">
+                <Link
+                    to={`/groups/${code}/settings`}
+                    className="w-9 h-9 rounded-full bg-tealbg text-teal flex items-center justify-center text-sm font-semibold"
+                >
                     {group.code.slice(0, 2)}
-                </div>
+                </Link>
             </div>
 
             {error && <p className="text-rust text-sm mt-3">{error}</p>}

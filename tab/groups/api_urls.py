@@ -12,4 +12,7 @@ urlpatterns = [
     path('<str:code>/record-payment/', api_views.RecordPaymentView.as_view(), name='api_record_payment'),
     path('<str:code>/balances/', api_views.BalancesView.as_view(), name='api_balances'),
     path('<str:code>/activity/', api_views.ActivityLogView.as_view(), name='api_activity'),
+    path('<str:code>/settings/', api_views.GroupSettingsView.as_view(), name='api_group_settings'),
+    path('<str:code>/leave/', api_views.LeaveGroupView.as_view(), name='api_leave_group'),
+    path('<str:code>/delete/', api_views.DeleteGroupView.as_view(), name='api_delete_group'),
 ]

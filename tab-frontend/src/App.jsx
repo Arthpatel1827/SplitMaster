@@ -6,6 +6,7 @@ import Signup from './pages/Signup'
 import Groups from './pages/Groups'
 import GroupDetail from './pages/GroupDetail'
 import ExpenseDetail from './pages/ExpenseDetail'
+import GroupSettings from './pages/GroupSettings'
 
 function RequireAuth({ children }) {
   const { user, loadUser } = useAuth()
@@ -28,6 +29,7 @@ function AppRoutes() {
       <Route path="/groups" element={<RequireAuth><Groups /></RequireAuth>} />
       <Route path="/groups/:code" element={<RequireAuth><GroupDetail /></RequireAuth>} />
       <Route path="/groups/:code/expenses/:id" element={<RequireAuth><ExpenseDetail /></RequireAuth>} />
+      <Route path="/groups/:code/settings" element={<RequireAuth><GroupSettings /></RequireAuth>} />
       <Route path="*" element={<Navigate to="/groups" />} />
     </Routes>
   )

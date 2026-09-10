@@ -73,3 +73,8 @@ class ExpenseDetailSerializer(serializers.ModelSerializer):
             return None
         request = self.context.get('request')
         return request.build_absolute_uri(obj.receipt.url) if request else obj.receipt.url
+
+class RenameGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['name']

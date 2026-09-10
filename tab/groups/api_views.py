@@ -18,6 +18,7 @@ from .serializers import (
     ExpenseDetailSerializer, 
     ExpenseListSerializer, 
     UserSerializer,
+    RenameGroupSerializer,
 )
 
 
@@ -302,3 +303,69 @@ def get_object_or_404_expense(group, pk, **filters):
         Expense.objects.select_related('paid_by').prefetch_related('splits__user'),
         id=pk, group=group, **filters
     )
+    
+class GroupSettingsView(APIView):
+    def get(self, request, code):
+        group = get_member_group(request.user, code)
+        return Response({
+            'name': group.name,
+            'code': group.code,
+            'simplify_debts': group.simplify_debts,
+            'is_creator': group.created_by_id == request.user.id,
+        })
+
+    def patch(self, request, code):
+        group = get_member_group(request.user, code)
+
+        if 'simplify_debts' in request.data:
+            group.simplify_debts = bool(request.data['simplify_debts'])
+            group.save()
+            log_activity(
+                group, request.user,
+                f'{request.user.username} turned {"on" if group.simplify_debts else "off"} simplified settle-up'
+            )
+
+        if 'name' in request.data:
+            old_name = group.name
+            serializer = RenameGroupSerializer(group, data={'name': request.data['name']}, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            if old_name != group.name:
+                log_activity(group, request.user, f'{request.user.username} renamed the group to "{group.name}"')
+
+        return Response({
+            'name': group.name,
+            'code': group.code,
+            'simplify_debts': group.simplify_debts,
+            'is_creator': group.created_by_id == request.user.id,
+        })
+
+
+class LeaveGroupView(APIView):
+    def post(self, request, code):
+        group = get_member_group(request.user, code)
+        balances = compute_balances(group)
+        my_balance = balances.get(request.user.id, Decimal('0.00'))
+
+        if abs(my_balance) > Decimal('0.005'):
+            return Response({'detail': "You can't leave until you're settled up in this group."}, status=400)
+
+        from .models import Membership
+        Membership.objects.filter(user=request.user, group=group).delete()
+        log_activity(group, request.user, f'{request.user.username} left the group')
+        return Response(status=204)
+
+
+class DeleteGroupView(APIView):
+    def delete(self, request, code):
+        group = get_member_group(request.user, code)
+
+        if group.created_by_id != request.user.id:
+            return Response({'detail': 'Only the group creator can delete this group.'}, status=403)
+
+        balances = compute_balances(group)
+        if any(abs(b) > Decimal('0.005') for b in balances.values()):
+            return Response({'detail': "You can't delete a group with unsettled balances."}, status=400)
+
+        group.delete()
+        return Response(status=204)
