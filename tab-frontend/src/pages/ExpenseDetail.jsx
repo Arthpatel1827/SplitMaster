@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Tesseract from 'tesseract.js'
 import client from '../api/client'
 import { scanReceiptTotal } from '../utils/scanReceipt'
-import { Receipt, Check, Undo2 } from 'lucide-react'
+import { Receipt, Check, Undo2, X, ArrowLeft } from 'lucide-react'
+import { LoadingScreen } from '../components/Spinner'
 
 function initials(name) {
   return name.slice(0, 2).toUpperCase()
@@ -48,7 +49,7 @@ export default function ExpenseDetail() {
 
   useEffect(() => { load() }, [code, id])
 
-  if (!group || !expense) return <div className="max-w-md mx-auto px-5 py-6">Loading...</div>
+  if (!group || !expense) return <LoadingScreen />
 
   const members = group.members
   const selectedMembers = members.filter((m) => splitAmong.includes(m.id))
@@ -150,9 +151,8 @@ export default function ExpenseDetail() {
             <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Split among</div>
             <div className="bg-white border border-line rounded-2xl divide-y divide-line">
               {members.map((m) => (
-                <label key={m.id} className={`flex items-center gap-3 px-4 py-3 cursor-pointer ${
-                  splitAmong.includes(m.id) ? 'bg-tealbg' : ''
-                }`}>
+                <label key={m.id} className={`flex items-center gap-3 px-4 py-3 cursor-pointer ${splitAmong.includes(m.id) ? 'bg-tealbg' : ''
+                  }`}>
                   <input
                     type="checkbox"
                     checked={splitAmong.includes(m.id)}
@@ -172,9 +172,8 @@ export default function ExpenseDetail() {
                 <button
                   type="button" key={t}
                   onClick={() => setSplitType(t)}
-                  className={`flex-1 py-2 rounded-xl border text-xs font-semibold capitalize ${
-                    splitType === t ? 'bg-ink text-paper border-ink' : 'border-line'
-                  }`}
+                  className={`flex-1 py-2 rounded-xl border text-xs font-semibold capitalize ${splitType === t ? 'bg-ink text-paper border-ink' : 'border-line'
+                    }`}
                 >
                   {t}
                 </button>
@@ -232,8 +231,10 @@ export default function ExpenseDetail() {
       <Link to={`/groups/${code}`} className="text-muted text-sm">&larr; {group.name}</Link>
 
       <div className="text-center mt-4 mb-6">
-        <div className="w-14 h-14 rounded-2xl bg-paper2 flex items-center justify-center mx-auto mb-3 text-2xl">
-          {expense.kind === 'payment' ? <Check size={26} className="text-teal" /> : expense.kind === 'refund' ? <Undo2 size={26} className="text-rust" /> : <Receipt size={26} />}
+        <div className="w-14 h-14 rounded-2xl bg-paper2 flex items-center justify-center mx-auto mb-3">
+          {expense.kind === 'payment' ? <Check size={28} className="text-teal" /> :
+            expense.kind === 'refund' ? <Undo2 size={28} className="text-rust" /> :
+              <Receipt size={28} />}
         </div>
         <h1 className="text-2xl font-bold">{expense.description}</h1>
         <div className="text-3xl font-bold font-mono mt-1">${expense.amount}</div>
