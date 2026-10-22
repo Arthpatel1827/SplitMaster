@@ -8,8 +8,8 @@ import { useConfirm } from '../components/ConfirmProvider'
 import { getErrorMessage } from '../utils/errors'
 import BottomNav from '../components/BottomNav'
 
-const inputCls = 'w-full px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors'
-const labelCls = 'text-xs uppercase tracking-wide text-muted font-semibold mb-2'
+const inputCls = 'w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors'
+const labelCls = 'text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2'
 
 export default function Account() {
   const { user, setUser, logout } = useAuth()
@@ -85,7 +85,7 @@ export default function Account() {
   return (
     <div className="max-w-md mx-auto px-5 pt-6 pb-28 animate-[fadeIn_0.25s_ease-out]">
       <Link to="/groups" className="text-muted text-sm hover:text-ink transition-colors">&larr; Your groups</Link>
-      <h1 className="text-2xl font-bold mt-2 mb-6">Account</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight mt-1 mb-6">Account</h1>
 
       <form onSubmit={saveProfile} className="space-y-3 mb-8">
         <div className={labelCls}>Profile</div>
@@ -95,7 +95,7 @@ export default function Account() {
           value={email} onChange={(e) => setEmail(e.target.value)}
         />
         {profileError && <p className="text-rust text-sm">{profileError}</p>}
-        <button disabled={savingProfile} className="w-full bg-ink text-paper font-semibold py-3 rounded-xl disabled:opacity-60">
+        <button disabled={savingProfile} className="w-full bg-teal text-white font-extrabold h-[54px] rounded-2xl disabled:opacity-60">
           {savingProfile ? 'Saving...' : 'Save profile'}
         </button>
       </form>
@@ -111,14 +111,14 @@ export default function Account() {
           value={newPw} onChange={(e) => setNewPw(e.target.value)}
         />
         {pwError && <p className="text-rust text-sm">{pwError}</p>}
-        <button disabled={savingPw || !currentPw || !newPw} className="w-full border border-ink font-semibold py-3 rounded-xl disabled:opacity-50">
+        <button disabled={savingPw || !currentPw || !newPw} className="w-full border-[1.5px] border-ink font-bold h-[54px] rounded-2xl disabled:opacity-50">
           {savingPw ? 'Updating...' : 'Update password'}
         </button>
       </form>
 
       <button
         onClick={logout}
-        className="w-full border border-line font-semibold py-3 rounded-xl mb-8 flex items-center justify-center gap-2"
+        className="w-full border border-[#cfcab9] bg-white font-bold h-[54px] rounded-2xl mb-8 flex items-center justify-center gap-2"
       >
         <LogOut size={16} /> Log out
       </button>
@@ -133,7 +133,7 @@ export default function Account() {
         {deleteError && <p className="text-rust text-sm">{deleteError}</p>}
         <button
           disabled={!deletePw}
-          className="w-full bg-rustbg text-rust font-semibold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full bg-rustbg text-rust font-bold h-[54px] rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <Trash2 size={16} /> Delete my account
         </button>

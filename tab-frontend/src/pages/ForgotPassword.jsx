@@ -26,10 +26,11 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="max-w-sm mx-auto px-5 py-10 animate-[fadeIn_0.25s_ease-out]">
+    <div className="max-w-sm mx-auto px-5 pt-14 pb-10 animate-[fadeIn_0.25s_ease-out]">
       <div className="text-center mb-8">
-        <div className="text-xs tracking-widest text-muted uppercase font-semibold">Tab</div>
-        <h1 className="text-2xl font-bold mt-1">Forgot your password?</h1>
+        <div className="w-12 h-12 rounded-2xl bg-teal text-white font-extrabold text-xl flex items-center justify-center mx-auto mb-4">T.</div>
+        <div className="text-[13px] tracking-widest text-muted uppercase font-bold">Tab</div>
+        <h1 className="text-3xl font-extrabold tracking-tight mt-1">Forgot your password?</h1>
         <p className="text-sm text-muted mt-2">Enter the email on your account and we'll send you a reset link.</p>
       </div>
 
@@ -44,7 +45,7 @@ export default function ForgotPassword() {
             <input
               type="email"
               required
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+              className="w-full h-[54px] pl-11 pr-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -54,7 +55,7 @@ export default function ForgotPassword() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-ink text-paper font-semibold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full bg-teal text-white font-extrabold h-[54px] rounded-2xl flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {loading ? <Spinner size={18} className="text-paper" /> : <Send size={18} />}
             {loading ? 'Sending...' : 'Send reset link'}

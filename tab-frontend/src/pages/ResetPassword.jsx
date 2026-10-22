@@ -38,7 +38,7 @@ export default function ResetPassword() {
 
   if (!uid || !token) {
     return (
-      <div className="max-w-sm mx-auto px-5 py-10 text-center">
+      <div className="max-w-sm mx-auto px-5 pt-14 pb-10 text-center">
         <p className="text-sm text-muted mb-4">This reset link is incomplete or invalid.</p>
         <Link to="/forgot-password" className="text-ink font-semibold underline">Request a new link</Link>
       </div>
@@ -46,17 +46,18 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="max-w-sm mx-auto px-5 py-10 animate-[fadeIn_0.25s_ease-out]">
+    <div className="max-w-sm mx-auto px-5 pt-14 pb-10 animate-[fadeIn_0.25s_ease-out]">
       <div className="text-center mb-8">
-        <div className="text-xs tracking-widest text-muted uppercase font-semibold">Tab</div>
-        <h1 className="text-2xl font-bold mt-1">Choose a new password</h1>
+        <div className="w-12 h-12 rounded-2xl bg-teal text-white font-extrabold text-xl flex items-center justify-center mx-auto mb-4">T.</div>
+        <div className="text-[13px] tracking-widest text-muted uppercase font-bold">Tab</div>
+        <h1 className="text-3xl font-extrabold tracking-tight mt-1">Choose a new password</h1>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">
           <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="password" required autoComplete="new-password"
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+            className="w-full h-[54px] pl-11 pr-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
             placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -66,7 +67,7 @@ export default function ResetPassword() {
           <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="password" required autoComplete="new-password"
-            className="w-full pl-11 pr-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+            className="w-full h-[54px] pl-11 pr-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
             placeholder="Confirm new password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
@@ -75,7 +76,7 @@ export default function ResetPassword() {
         {error && <p className="text-rust text-sm">{error}</p>}
         <button
           type="submit" disabled={loading}
-          className="w-full bg-ink text-paper font-semibold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
+          className="w-full bg-teal text-white font-extrabold h-[54px] rounded-2xl flex items-center justify-center gap-2 disabled:opacity-60"
         >
           {loading ? <Spinner size={18} className="text-paper" /> : <KeyRound size={18} />}
           {loading ? 'Saving...' : 'Update password'}

@@ -125,28 +125,28 @@ export default function GroupSettings() {
   return (
     <div className="max-w-md mx-auto px-5 py-6 animate-[fadeIn_0.25s_ease-out]">
       <Link to={`/groups/${code}`} className="text-muted text-sm hover:text-ink transition-colors">&larr; {settings.name}</Link>
-      <h1 className="text-2xl font-bold mt-2 mb-6">Group settings</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight mt-1 mb-6">Group settings</h1>
 
       {error && <p className="text-rust text-sm mb-4">{error}</p>}
 
       <form onSubmit={saveName} className="mb-6">
-        <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Group name</div>
+        <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Group name</div>
         <div className="flex gap-2">
           <input
-            className="flex-1 px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+            className="flex-1 h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <button
             type="submit" disabled={saving}
-            className="bg-ink text-paper font-semibold px-5 rounded-xl disabled:opacity-60 transition-opacity"
+            className="bg-teal text-white font-extrabold px-5 h-[54px] rounded-2xl disabled:opacity-60 transition-opacity"
           >
             {saving ? '...' : 'Save'}
           </button>
         </div>
       </form>
 
-      <div className="bg-white border border-line rounded-2xl p-4 flex items-center justify-between mb-6">
+      <div className="bg-white border border-[#e6e2d6] rounded-[20px] p-4 flex items-center justify-between mb-6">
         <div className="pr-4">
           <div className="font-semibold">Simplify settle-up</div>
           <p className="text-sm text-muted mt-1">
@@ -167,8 +167,8 @@ export default function GroupSettings() {
         </button>
       </div>
 
-      <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Members</div>
-      <div className="bg-white border border-line rounded-2xl divide-y divide-line mb-6">
+      <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Members</div>
+      <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-line mb-6">
         {members.map((m) => (
           <div key={m.id} className="flex items-center justify-between px-4 py-3">
             <div>
@@ -189,17 +189,17 @@ export default function GroupSettings() {
         ))}
       </div>
 
-      <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Danger zone</div>
+      <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Danger zone</div>
       <button
         onClick={leaveGroup}
-        className="w-full text-rust font-semibold py-3 rounded-xl border border-line mb-3 flex items-center justify-center gap-2 hover:bg-rustbg transition-colors"
+        className="w-full text-rust font-bold h-[54px] rounded-2xl border border-[#cfcab9] bg-white mb-3 flex items-center justify-center gap-2 hover:bg-rustbg transition-colors"
       >
         <LogOut size={16} /> Leave group
       </button>
       {settings.is_creator && (
         <button
           onClick={deleteGroup}
-          className="w-full bg-rustbg text-rust font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
+          className="w-full bg-rustbg text-rust font-bold h-[54px] rounded-2xl flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
         >
           <Trash2 size={16} /> Delete group
         </button>

@@ -176,25 +176,25 @@ export default function ExpenseDetail() {
     return (
       <div className="max-w-md mx-auto px-5 py-6">
         <button onClick={() => setEditing(false)} className="text-muted text-sm">&larr; Cancel</button>
-        <h1 className="text-2xl font-bold mt-2 mb-6">Edit expense</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight mt-1 mb-6">Edit expense</h1>
 
         <form onSubmit={handleSave} className="space-y-4">
           <input
-            className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none"
+            className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <input
             type="number" step="0.01"
-            className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none"
+            className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Paid by</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Paid by</div>
             <select
-              className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none"
+              className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
               value={paidBy}
               onChange={(e) => setPaidBy(Number(e.target.value))}
             >
@@ -203,8 +203,8 @@ export default function ExpenseDetail() {
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Split among</div>
-            <div className="bg-white border border-line rounded-2xl divide-y divide-line">
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Split among</div>
+            <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-line">
               {members.map((m) => (
                 <label key={m.id} className={`flex items-center gap-3 px-4 py-3 cursor-pointer ${splitAmong.includes(m.id) ? 'bg-tealbg' : ''
                   }`}>
@@ -221,13 +221,13 @@ export default function ExpenseDetail() {
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Split type</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Split type</div>
             <div className="flex gap-2">
               {['equal', 'exact', 'percent', 'shares'].map((t) => (
                 <button
                   type="button" key={t}
                   onClick={() => setSplitType(t)}
-                  className={`flex-1 py-2 rounded-xl border text-xs font-semibold capitalize ${splitType === t ? 'bg-ink text-paper border-ink' : 'border-line'
+                  className={`flex-1 py-2.5 rounded-xl border text-xs font-bold capitalize ${splitType === t ? 'bg-teal text-white border-teal' : 'border-line'
                     }`}
                 >
                   {t}
@@ -253,9 +253,9 @@ export default function ExpenseDetail() {
           )}
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Notes</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Notes</div>
             <textarea
-              className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none"
+              className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -263,7 +263,7 @@ export default function ExpenseDetail() {
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Receipt photo</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Receipt photo</div>
             <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-line bg-white cursor-pointer">
               <span className="text-sm text-muted">{scanning ? 'Scanning...' : preview ? 'Photo attached — tap to change' : 'Tap to attach a photo'}</span>
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
@@ -285,7 +285,7 @@ export default function ExpenseDetail() {
 
           {error && <p className="text-rust text-sm">{error}</p>}
 
-          <button type="submit" disabled={saving} className="w-full bg-ink text-paper font-semibold py-3 rounded-xl disabled:opacity-50">
+          <button type="submit" disabled={saving} className="w-full bg-teal text-white font-extrabold h-[54px] rounded-2xl disabled:opacity-50">
             {saving ? 'Saving...' : 'Save changes'}
           </button>
         </form>
@@ -298,17 +298,17 @@ export default function ExpenseDetail() {
       <Link to={`/groups/${code}`} className="text-muted text-sm">&larr; {group.name}</Link>
 
       <div className="text-center mt-4 mb-6">
-        <div className="w-14 h-14 rounded-2xl bg-paper2 flex items-center justify-center mx-auto mb-3">
+        <div className="w-14 h-14 rounded-[18px] bg-sand flex items-center justify-center mx-auto mb-3">
           {expense.kind === 'payment' ? <Check size={28} className="text-teal" /> :
             expense.kind === 'refund' ? <Undo2 size={28} className="text-rust" /> :
               <Receipt size={28} />}
         </div>
-        <h1 className="text-2xl font-bold">{expense.description}</h1>
-        <div className="text-3xl font-bold font-mono mt-1">${expense.amount}</div>
+        <h1 className="text-2xl font-extrabold tracking-tight">{expense.description}</h1>
+        <div className="text-4xl font-extrabold tracking-tight mt-1">${expense.amount}</div>
         <div className="text-sm text-muted mt-1">{new Date(expense.created_at).toLocaleString()}</div>
       </div>
 
-      <div className="bg-white border border-line rounded-2xl p-4 mb-4">
+      <div className="bg-white border border-[#e6e2d6] rounded-[20px] p-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-tealbg flex items-center justify-center text-xs font-semibold text-teal">
             {initials(expense.paid_by.username)}
@@ -321,25 +321,25 @@ export default function ExpenseDetail() {
       </div>
 
       {expense.notes && (
-        <div className="bg-white border border-line rounded-2xl p-4 mb-4">
-          <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-1">Notes</div>
+        <div className="bg-white border border-[#e6e2d6] rounded-[20px] p-4 mb-4">
+          <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-1">Notes</div>
           <p className="text-sm whitespace-pre-line">{expense.notes}</p>
         </div>
       )}
 
       {expense.receipt && (
         <div className="mb-4">
-          <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Receipt</div>
+          <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Receipt</div>
           <a href={expense.receipt} target="_blank" rel="noreferrer">
             <img src={expense.receipt} className="rounded-2xl border border-line w-full" />
           </a>
         </div>
       )}
 
-      <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">
+      <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">
         Split between {expense.splits.length} {expense.splits.length === 1 ? 'person' : 'people'}
       </div>
-      <div className="bg-white border border-line rounded-2xl divide-y divide-line mb-6">
+      <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-line mb-6">
         {expense.splits.map((s) => (
           <div key={s.user.id} className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
@@ -356,24 +356,24 @@ export default function ExpenseDetail() {
       {expense.kind === 'expense' && (
         <>
           {expense.is_refunded ? (
-            <div className="text-center text-sm text-muted bg-paper2 rounded-xl py-3 mb-3">
+            <div className="text-center text-sm text-muted bg-sand rounded-2xl py-3 mb-3">
               This expense has been refunded
             </div>
           ) : (
             <button
               onClick={handleRefund}
-              className="w-full text-teal font-semibold py-3 rounded-xl border border-teal mb-3"
+              className="w-full text-teal font-bold h-[54px] rounded-2xl border-[1.5px] border-teal mb-3"
             >
               Refund this expense
             </button>
           )}
           <div className="flex gap-3">
             {!expense.is_refunded && (
-              <button onClick={() => setEditing(true)} className="flex-1 bg-ink text-paper font-semibold py-3 rounded-xl">
+              <button onClick={() => setEditing(true)} className="flex-1 bg-teal text-white font-extrabold h-[54px] rounded-2xl">
                 Edit
               </button>
             )}
-            <button onClick={handleDelete} className="flex-1 text-rust font-semibold py-3 rounded-xl border border-line">
+            <button onClick={handleDelete} className="flex-1 text-rust font-bold h-[54px] rounded-2xl border border-[#cfcab9] bg-white">
               Delete
             </button>
           </div>

@@ -104,11 +104,12 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
       onClick={handleClose}
     >
       <div
-        className={`bg-paper w-full max-w-md rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto transition-transform duration-200 ${
+        className={`bg-paper w-full max-w-md rounded-t-[28px] px-5 pt-3 pb-8 max-h-[85vh] overflow-y-auto transition-transform duration-200 ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="w-10 h-1.5 rounded-full bg-[#cfcab9] mx-auto mb-4" />
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">Add an expense</h2>
           <button onClick={handleClose} className="text-muted hover:text-ink transition-colors">
@@ -118,23 +119,23 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+            className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
             placeholder="What was it for?"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <input
             type="number" step="0.01"
-            className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+            className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Paid by</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Paid by</div>
             <select
-              className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+              className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
               value={paidBy}
               onChange={(e) => setPaidBy(Number(e.target.value))}
             >
@@ -143,8 +144,8 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Split among</div>
-            <div className="bg-white border border-line rounded-2xl divide-y divide-line">
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Split among</div>
+            <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-line">
               {members.map((m) => (
                 <label key={m.id} className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
                   splitAmong.includes(m.id) ? 'bg-tealbg' : 'hover:bg-paper2'
@@ -162,14 +163,14 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Split type</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Split type</div>
             <div className="flex gap-2">
               {['equal', 'exact', 'percent', 'shares'].map((t) => (
                 <button
                   type="button" key={t}
                   onClick={() => setSplitType(t)}
-                  className={`flex-1 py-2 rounded-xl border text-xs font-semibold capitalize transition-colors ${
-                    splitType === t ? 'bg-ink text-paper border-ink' : 'border-line hover:border-ink'
+                  className={`flex-1 py-2.5 rounded-xl border text-xs font-bold capitalize transition-colors ${
+                    splitType === t ? 'bg-teal text-white border-teal' : 'border-line hover:border-ink'
                   }`}
                 >
                   {t}
@@ -180,7 +181,7 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
 
           {splitType !== 'equal' && selectedMembers.length > 0 && (
             <div className="space-y-2 animate-[fadeIn_0.2s_ease-out]">
-              <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-1">
+              <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-1">
                 {splitType === 'exact' ? 'Amount per person' : splitType === 'percent' ? 'Percent per person' : 'Shares per person'}
               </div>
               {selectedMembers.map((m) => (
@@ -202,9 +203,9 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
           )}
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Notes</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Notes</div>
             <textarea
-              className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+              className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors"
               rows={3}
               placeholder="Add a note (optional)"
               value={notes}
@@ -213,7 +214,7 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
           </div>
 
           <div>
-            <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Receipt photo</div>
+            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Receipt photo</div>
             <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-line bg-white cursor-pointer hover:border-ink transition-colors">
               {scanning && <Spinner size={18} />}
               <span className="text-sm text-muted">
@@ -244,7 +245,7 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
 
           <button
             type="submit" disabled={saving}
-            className="w-full bg-ink text-paper font-semibold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
+            className="w-full bg-teal text-white font-extrabold h-[54px] rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
           >
             {saving && <Spinner size={18} className="text-paper" />}
             {saving ? 'Saving...' : 'Add expense'}
