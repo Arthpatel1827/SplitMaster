@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import Tesseract from 'tesseract.js'
 import client from '../api/client'
-import { scanReceiptTotal } from '../utils/scanReceipt'
 import { Receipt, Check, Undo2, ChevronLeft, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import { LoadingScreen } from '../components/Spinner'
-import ExpenseFormFields from '../components/ExpenseFormFields'
+import ExpenseFormFields, { MAX_RECEIPTS } from '../components/ExpenseFormFields'
 import { getErrorMessage } from '../utils/errors'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../components/ConfirmProvider'
@@ -22,7 +20,6 @@ export default function ExpenseDetail() {
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
   const [loadError, setLoadError] = useState('')
-  const [removeReceipt, setRemoveReceipt] = useState(false)
   const toast = useToast()
   const confirm = useConfirm()
 
@@ -34,9 +31,7 @@ export default function ExpenseDetail() {
   const [splitType, setSplitType] = useState('equal')
   const [shares, setShares] = useState({})
   const [notes, setNotes] = useState('')
-  const [receiptFile, setReceiptFile] = useState(null)
-  const [preview, setPreview] = useState(null)
-  const [scanning, setScanning] = useState(false)
+  const [receipts, setReceipts] = useState([])
   const [saving, setSaving] = useState(false)
 
   const load = async () => {
@@ -52,9 +47,7 @@ export default function ExpenseDetail() {
     setSplitAmong(e.data.splits.map((s) => s.user.id))
     setSplitType(e.data.split_type)
     setNotes(e.data.notes || '')
-    setPreview(e.data.receipt || null)
-    setRemoveReceipt(false)
-    setReceiptFile(null)
+    setReceipts(e.data.receipts.map((r) => ({ key: `r${r.id}`, id: r.id, url: r.url })))
     // prefill custom split values so editing doesn't start from blank inputs
     const total = parseFloat(e.data.amount) || 0
     const prefill = {}
@@ -88,23 +81,16 @@ export default function ExpenseDetail() {
     setSplitAmong((prev) => (prev.includes(mid) ? prev.filter((x) => x !== mid) : [...prev, mid]))
   }
 
-  const handleFile = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    setReceiptFile(file)
-    setRemoveReceipt(false)
-    setPreview(URL.createObjectURL(file))
-    setScanning(true)
-    try {
-      const { data: { text } } = await Tesseract.recognize(file, 'eng')
-      const amt = scanReceiptTotal(text)
-      if (amt) setAmount(amt)
-    } catch {
-      // non-fatal
-    } finally {
-      setScanning(false)
-    }
+  const addFiles = (files) => {
+    const room = MAX_RECEIPTS - receipts.length
+    if (files.length > room) toast.error(`You can attach up to ${MAX_RECEIPTS} receipts.`)
+    const items = files.slice(0, Math.max(room, 0)).map((file) => ({
+      key: `${file.name}-${file.size}-${Math.random()}`, file, url: URL.createObjectURL(file),
+    }))
+    setReceipts((prev) => [...prev, ...items])
   }
+
+  const removeReceipt = (key) => setReceipts((prev) => prev.filter((r) => r.key !== key))
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -123,8 +109,10 @@ export default function ExpenseDetail() {
       form.append('split_type', splitType)
       form.append('shares', JSON.stringify(shares))
       form.append('notes', notes)
-      if (receiptFile) form.append('receipt', receiptFile)
-      if (removeReceipt && !receiptFile) form.append('remove_receipt', 'true')
+      const keptIds = receipts.filter((r) => r.id).map((r) => r.id)
+      const removedIds = expense.receipts.map((r) => r.id).filter((rid) => !keptIds.includes(rid))
+      form.append('remove_receipt_ids', JSON.stringify(removedIds))
+      receipts.filter((r) => r.file).forEach((r) => form.append('receipts', r.file))
 
       await client.put(`/groups/${code}/expenses/${id}/`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -193,9 +181,7 @@ export default function ExpenseDetail() {
             splitType={splitType} setSplitType={setSplitType}
             shares={shares} setShares={setShares}
             notes={notes} setNotes={setNotes}
-            preview={preview} scanning={scanning} scanned={false}
-            onFile={handleFile}
-            onRemovePhoto={() => { setPreview(null); setReceiptFile(null); setRemoveReceipt(true) }}
+            receipts={receipts} onAddFiles={addFiles} onRemoveReceipt={removeReceipt}
           />
           {error && <p className="text-rust text-sm">{error}</p>}
           <button type="submit" disabled={saving} className="w-full bg-teal text-white font-extrabold h-[54px] rounded-2xl disabled:opacity-50">
@@ -259,12 +245,18 @@ export default function ExpenseDetail() {
         </div>
       )}
 
-      {expense.receipt && (
+      {expense.receipts.length > 0 && (
         <div className="mb-4">
-          <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Receipt</div>
-          <a href={expense.receipt} target="_blank" rel="noreferrer">
-            <img src={expense.receipt} alt="Receipt" className="rounded-[20px] border border-[#e6e2d6] w-full" />
-          </a>
+          <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">
+            Receipts ({expense.receipts.length})
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {expense.receipts.map((r) => (
+              <a key={r.id} href={r.url} target="_blank" rel="noreferrer">
+                <img src={r.url} alt="Receipt" className="rounded-[20px] border border-[#e6e2d6] w-full aspect-[3/4] object-cover" />
+              </a>
+            ))}
+          </div>
         </div>
       )}
 

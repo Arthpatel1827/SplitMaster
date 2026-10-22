@@ -8,10 +8,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 
-from .api_helpers import BALANCE_TOLERANCE, get_member_group, parse_money, validate_receipt
+from .api_helpers import (
+    BALANCE_TOLERANCE, MAX_RECEIPTS_PER_EXPENSE, get_member_group, parse_money, validate_receipt,
+)
 from .balances import compute_balances, compute_pairwise_balances, simplify_debts, log_activity
 from .expense_logic import parse_custom_shares, save_splits
-from .models import Group, Membership, ActivityLog, Expense, ExpenseSplit
+from .models import Group, Membership, ActivityLog, Expense, ExpenseReceipt, ExpenseSplit
 from .serializers import (
     CreateGroupSerializer,
     GroupDetailSerializer,
@@ -122,16 +124,19 @@ class ExpenseListCreateView(APIView):
             if error:
                 return Response({'detail': error}, status=400)
 
-        receipt = request.FILES.get('receipt')
-        if receipt:
-            validate_receipt(receipt)
+        new_receipts = request.FILES.getlist('receipts')
+        if len(new_receipts) > MAX_RECEIPTS_PER_EXPENSE:
+            return Response({'detail': f'You can attach up to {MAX_RECEIPTS_PER_EXPENSE} receipts.'}, status=400)
+        for f in new_receipts:
+            validate_receipt(f)
 
         with transaction.atomic():
             expense = Expense.objects.create(
                 group=group, description=description, amount=amount, paid_by=paid_by,
                 split_type=split_type, notes=str(data.get('notes', ''))[:5000],
-                receipt=receipt,
             )
+            for f in new_receipts:
+                ExpenseReceipt.objects.create(expense=expense, image=f)
             save_splits(expense, split_among, amount, split_type, custom_shares)
         log_activity(group, request.user, f'{request.user.username} added "{description}" (${amount})')
         return Response(ExpenseDetailSerializer(expense, context={'request': request}).data, status=201)
@@ -191,14 +196,22 @@ class ExpenseDetailView(APIView):
         expense.paid_by = paid_by
         expense.split_type = split_type
         expense.notes = str(data.get('notes', expense.notes))[:5000]
-        new_receipt = request.FILES.get('receipt')
-        if new_receipt:
-            validate_receipt(new_receipt)
-            expense.receipt = new_receipt
-        elif str(data.get('remove_receipt', '')).lower() in ('1', 'true'):
-            expense.receipt = None
+        new_receipts = request.FILES.getlist('receipts')
+        remove_ids = _parse_json_field(data.get('remove_receipt_ids'), [])
+        try:
+            remove_ids = {int(i) for i in remove_ids}
+        except (TypeError, ValueError):
+            return Response({'detail': 'Invalid remove_receipt_ids.'}, status=400)
+        kept = expense.receipts.exclude(id__in=remove_ids).count()
+        if kept + len(new_receipts) > MAX_RECEIPTS_PER_EXPENSE:
+            return Response({'detail': f'You can attach up to {MAX_RECEIPTS_PER_EXPENSE} receipts.'}, status=400)
+        for f in new_receipts:
+            validate_receipt(f)
         with transaction.atomic():
             expense.save()
+            expense.receipts.filter(id__in=remove_ids).delete()
+            for f in new_receipts:
+                ExpenseReceipt.objects.create(expense=expense, image=f)
             save_splits(expense, split_among, amount, split_type, custom_shares)
 
         changes = []

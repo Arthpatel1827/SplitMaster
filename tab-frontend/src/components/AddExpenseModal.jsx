@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
-import Tesseract from 'tesseract.js'
 import { X } from 'lucide-react'
 import client from '../api/client'
-import { scanReceiptTotal } from '../utils/scanReceipt'
 import { getErrorMessage } from '../utils/errors'
-import ExpenseFormFields from './ExpenseFormFields'
+import ExpenseFormFields, { MAX_RECEIPTS } from './ExpenseFormFields'
 import { useToast } from '../context/ToastContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -19,10 +17,7 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
   const [splitType, setSplitType] = useState('equal')
   const [shares, setShares] = useState({})
   const [notes, setNotes] = useState('')
-  const [receiptFile, setReceiptFile] = useState(null)
-  const [preview, setPreview] = useState(null)
-  const [scanning, setScanning] = useState(false)
-  const [scanned, setScanned] = useState(false)
+  const [receipts, setReceipts] = useState([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const toast = useToast()
@@ -40,32 +35,16 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
   }
 
 
-  const handleFile = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    setReceiptFile(file)
-    setPreview(URL.createObjectURL(file))
-    setScanning(true)
-    setScanned(false)
-    try {
-      const { data: { text } } = await Tesseract.recognize(file, 'eng')
-      const amt = scanReceiptTotal(text)
-      if (amt) {
-        setAmount(amt)
-        setScanned(true)
-      }
-    } catch {
-      // OCR failure is non-fatal, user can still type the amount manually
-    } finally {
-      setScanning(false)
-    }
+  const addFiles = (files) => {
+    const room = MAX_RECEIPTS - receipts.length
+    if (files.length > room) toast.error(`You can attach up to ${MAX_RECEIPTS} receipts.`)
+    const items = files.slice(0, Math.max(room, 0)).map((file) => ({
+      key: `${file.name}-${file.size}-${Math.random()}`, file, url: URL.createObjectURL(file),
+    }))
+    setReceipts((prev) => [...prev, ...items])
   }
 
-  const removePhoto = () => {
-    setReceiptFile(null)
-    setPreview(null)
-    setScanned(false)
-  }
+  const removeReceipt = (key) => setReceipts((prev) => prev.filter((r) => r.key !== key))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -84,7 +63,7 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
       form.append('split_type', splitType)
       form.append('shares', JSON.stringify(shares))
       form.append('notes', notes)
-      if (receiptFile) form.append('receipt', receiptFile)
+      receipts.forEach((r) => form.append('receipts', r.file))
 
       await client.post(`/groups/${code}/expenses/`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -129,8 +108,7 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
             splitType={splitType} setSplitType={setSplitType}
             shares={shares} setShares={setShares}
             notes={notes} setNotes={setNotes}
-            preview={preview} scanning={scanning} scanned={scanned}
-            onFile={handleFile} onRemovePhoto={removePhoto}
+            receipts={receipts} onAddFiles={addFiles} onRemoveReceipt={removeReceipt}
           />
           {error && <p className="text-rust text-sm">{error}</p>}
           <button

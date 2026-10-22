@@ -61,7 +61,6 @@ class Expense(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='expenses_paid'
     )
     notes = models.TextField(blank=True)
-    receipt = models.ImageField(upload_to='receipts/%Y/%m/', blank=True, null=True)
     is_refunded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -70,6 +69,15 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.description} - {self.amount}"
+
+
+class ExpenseReceipt(models.Model):
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, related_name='receipts')
+    image = models.ImageField(upload_to='receipts/%Y/%m/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
 
 
 class ExpenseSplit(models.Model):

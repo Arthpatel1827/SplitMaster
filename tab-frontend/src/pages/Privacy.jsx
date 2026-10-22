@@ -25,7 +25,7 @@ export default function Privacy() {
       <ul className="list-disc pl-5 space-y-1.5">
         <li><b>Account details:</b> your username, your password (stored only as a salted hash, never in plain text), and an email address if you choose to add one.</li>
         <li><b>Group and expense data you enter:</b> group names, member lists, expense descriptions, amounts, who paid, how it was split, notes, payments and refunds, and an activity history of those actions.</li>
-        <li><b>Receipt photos:</b> only if you choose to attach one to an expense. Anyone in that group can see it.</li>
+        <li><b>Receipt photos:</b> only if you choose to attach them to an expense (up to 5 per expense). Anyone in that group can see it.</li>
         <li><b>Technical data:</b> standard server logs (such as IP address and request time) kept by our hosting providers for security and troubleshooting.</li>
       </ul>
       <p className="mt-3">
@@ -40,9 +40,8 @@ export default function Privacy() {
 
       <H>Camera and photos</H>
       <p>
-        If you tap &ldquo;Add a receipt photo&rdquo;, the app asks to use your camera or choose a photo. Text recognition
-        (to suggest the total) runs on your device; the suggestion is never applied without your review. The recognition
-        engine may download its language data from a public CDN the first time it is used.
+        If you tap &ldquo;Add receipt photos&rdquo;, the app asks to choose photos or use your camera. Photos are only
+        uploaded when you save the expense.
       </p>
 
       <H>Who can see your data</H>

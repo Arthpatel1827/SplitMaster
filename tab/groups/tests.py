@@ -364,26 +364,61 @@ def make_image(fmt='PNG'):
 
 
 class ReceiptTests(GroupTestBase):
-    def post_with_file(self, upload):
-        return self.as_user(self.alice).post(f'/api/groups/{self.code}/expenses/', {
+    def payload(self, files, **extra):
+        data = {
             'description': 'Lunch', 'amount': '12', 'paid_by': self.alice.id,
-            'split_among': f'[{self.alice.id}, {self.bob.id}]', 'split_type': 'equal', 'receipt': upload,
-        }, format='multipart')
+            'split_among': f'[{self.alice.id}, {self.bob.id}]', 'split_type': 'equal',
+        }
+        if files:
+            data['receipts'] = files
+        data.update(extra)
+        return data
 
-    def test_valid_image_accepted_and_removable(self):
+    def post_with_file(self, upload):
+        return self.as_user(self.alice).post(
+            f'/api/groups/{self.code}/expenses/', self.payload([upload]), format='multipart')
+
+    def png(self, name='r.png'):
+        return SimpleUploadedFile(name, make_image('PNG'), 'image/png')
+
+    def test_multiple_receipts_added_and_removed(self):
         import tempfile
         from django.test import override_settings
         with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=tmp):
-            res = self.post_with_file(SimpleUploadedFile('r.png', make_image('PNG'), 'image/png'))
+            res = self.as_user(self.alice).post(
+                f'/api/groups/{self.code}/expenses/',
+                self.payload([self.png('a.png'), self.png('b.png')]), format='multipart')
             self.assertEqual(res.status_code, 201)
-            self.assertTrue(res.data['has_receipt'] if 'has_receipt' in res.data else res.data.get('receipt'))
+            self.assertEqual(len(res.data['receipts']), 2)
             eid = res.data['id']
-            edit = self.as_user(self.alice).put(f'/api/groups/{self.code}/expenses/{eid}/', {
-                'description': 'Lunch', 'amount': '12', 'paid_by': self.alice.id,
-                'split_among': f'[{self.alice.id}]', 'split_type': 'equal', 'remove_receipt': 'true',
-            }, format='multipart')
+            first_id = res.data['receipts'][0]['id']
+            edit = self.as_user(self.alice).put(
+                f'/api/groups/{self.code}/expenses/{eid}/',
+                self.payload([self.png('c.png')], remove_receipt_ids=f'[{first_id}]'), format='multipart')
             self.assertEqual(edit.status_code, 200)
-            self.assertFalse(Expense.objects.get(id=eid).receipt)
+            self.assertEqual(Expense.objects.get(id=eid).receipts.count(), 2)
+            self.assertFalse(Expense.objects.get(id=eid).receipts.filter(id=first_id).exists())
+
+    def test_more_than_five_rejected_on_create(self):
+        res = self.as_user(self.alice).post(
+            f'/api/groups/{self.code}/expenses/',
+            self.payload([self.png(f'{i}.png') for i in range(6)]), format='multipart')
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(Expense.objects.count(), 0)
+
+    def test_more_than_five_rejected_on_edit(self):
+        import tempfile
+        from django.test import override_settings
+        with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=tmp):
+            res = self.as_user(self.alice).post(
+                f'/api/groups/{self.code}/expenses/',
+                self.payload([self.png(f'{i}.png') for i in range(5)]), format='multipart')
+            self.assertEqual(res.status_code, 201)
+            edit = self.as_user(self.alice).put(
+                f'/api/groups/{self.code}/expenses/{res.data["id"]}/',
+                self.payload([self.png('x.png')]), format='multipart')
+            self.assertEqual(edit.status_code, 400)
+            self.assertEqual(Expense.objects.get(id=res.data['id']).receipts.count(), 5)
 
     def test_non_image_rejected(self):
         res = self.post_with_file(SimpleUploadedFile('r.png', b'<script>alert(1)</script>', 'image/png'))

@@ -65,7 +65,7 @@ class ExpenseListSerializer(serializers.ModelSerializer):
                   'has_receipt', 'has_notes', 'is_refunded', 'created_at']
 
     def get_has_receipt(self, obj):
-        return bool(obj.receipt)
+        return obj.receipts.exists()
 
     def get_has_notes(self, obj):
         return bool(obj.notes)
@@ -74,18 +74,19 @@ class ExpenseListSerializer(serializers.ModelSerializer):
 class ExpenseDetailSerializer(serializers.ModelSerializer):
     paid_by = UserSerializer(read_only=True)
     splits = ExpenseSplitSerializer(many=True, read_only=True)
-    receipt = serializers.SerializerMethodField()
+    receipts = serializers.SerializerMethodField()
 
     class Meta:
         model = Expense
         fields = ['id', 'kind', 'split_type', 'description', 'amount', 'paid_by',
-                  'splits', 'notes', 'receipt', 'is_refunded', 'created_at']
+                  'splits', 'notes', 'receipts', 'is_refunded', 'created_at']
 
-    def get_receipt(self, obj):
-        if not obj.receipt:
-            return None
+    def get_receipts(self, obj):
         request = self.context.get('request')
-        return request.build_absolute_uri(obj.receipt.url) if request else obj.receipt.url
+        return [
+            {'id': r.id, 'url': request.build_absolute_uri(r.image.url) if request else r.image.url}
+            for r in obj.receipts.all()
+        ]
 
 class RenameGroupSerializer(serializers.ModelSerializer):
     class Meta:

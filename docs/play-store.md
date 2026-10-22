@@ -51,7 +51,7 @@ SplitMaster makes sharing costs simple. Create a group, add expenses, and it kee
 SPLIT IT YOUR WAY
 - Equal, exact amounts, percentages, or shares
 - Choose who paid and who is included
-- Add notes and attach a receipt photo
+- Add notes and attach up to 5 receipt photos
 
 ALWAYS KNOW WHERE YOU STAND
 - Live balances for everyone in the group

@@ -1,5 +1,7 @@
 import { Camera, Check } from 'lucide-react'
 
+export const MAX_RECEIPTS = 5
+
 const AVATARS = ['bg-tealbg text-teal', 'bg-rustbg text-rust', 'bg-sand text-[#5f5a4d]', 'bg-ink text-paper']
 const label = 'text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2'
 const field = 'w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors'
@@ -15,7 +17,7 @@ const SPLIT_TYPES = [
 export default function ExpenseFormFields({
   members, description, setDescription, amount, setAmount, paidBy, setPaidBy,
   splitAmong, toggleMember, splitType, setSplitType, shares, setShares,
-  notes, setNotes, preview, scanning, scanned, onFile, onRemovePhoto,
+  notes, setNotes, receipts, onAddFiles, onRemoveReceipt,
 }) {
   const selected = members.filter((m) => splitAmong.includes(m.id))
   const total = selected.reduce((sum, m) => sum + (parseFloat(shares[m.id]) || 0), 0)
@@ -37,7 +39,6 @@ export default function ExpenseFormFields({
             onChange={(e) => setAmount(e.target.value)}
           />
         </div>
-        {scanned && <p className="text-xs text-teal font-semibold mt-2">Filled in from your receipt. Please double-check it.</p>}
       </div>
 
       <div>
@@ -125,21 +126,30 @@ export default function ExpenseFormFields({
       </div>
 
       <div>
-        <div className={label}>Receipt</div>
-        <label className="flex items-center justify-center gap-2 h-[54px] rounded-2xl border-[1.5px] border-dashed border-[#cfcab9] bg-white cursor-pointer text-sm font-semibold text-muted">
-          <Camera size={18} />
-          {scanning ? 'Scanning receipt...' : preview ? 'Change photo' : 'Add a receipt photo'}
-          <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
-        </label>
-        {preview && (
-          <div className="relative mt-3 inline-block">
-            <img src={preview} alt="Receipt preview" className="rounded-2xl max-h-44 w-auto" />
-            <button
-              type="button" aria-label="Remove receipt photo" onClick={onRemovePhoto}
-              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-ink/80 text-white flex items-center justify-center text-lg"
-            >
-              &times;
-            </button>
+        <div className={label}>Receipts ({receipts.length}/{MAX_RECEIPTS})</div>
+        {receipts.length < MAX_RECEIPTS && (
+          <label className="flex items-center justify-center gap-2 h-[54px] rounded-2xl border-[1.5px] border-dashed border-[#cfcab9] bg-white cursor-pointer text-sm font-semibold text-muted">
+            <Camera size={18} />
+            {receipts.length ? 'Add another photo' : 'Add receipt photos'}
+            <input
+              type="file" accept="image/*" multiple className="hidden"
+              onChange={(e) => { onAddFiles(Array.from(e.target.files)); e.target.value = '' }}
+            />
+          </label>
+        )}
+        {receipts.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            {receipts.map((r) => (
+              <div key={r.key} className="relative aspect-square">
+                <img src={r.url} alt="Receipt" className="w-full h-full object-cover rounded-2xl border border-[#e6e2d6]" />
+                <button
+                  type="button" aria-label="Remove receipt photo" onClick={() => onRemoveReceipt(r.key)}
+                  className="absolute top-1 right-1 w-7 h-7 rounded-full bg-ink/80 text-white flex items-center justify-center text-lg"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
