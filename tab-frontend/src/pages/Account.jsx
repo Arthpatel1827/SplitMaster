@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../components/ConfirmProvider'
 import { getErrorMessage } from '../utils/errors'
+import BottomNav from '../components/BottomNav'
 
 const inputCls = 'w-full px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors'
 const labelCls = 'text-xs uppercase tracking-wide text-muted font-semibold mb-2'
@@ -82,7 +83,7 @@ export default function Account() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-5 py-6 animate-[fadeIn_0.25s_ease-out]">
+    <div className="max-w-md mx-auto px-5 pt-6 pb-28 animate-[fadeIn_0.25s_ease-out]">
       <Link to="/groups" className="text-muted text-sm hover:text-ink transition-colors">&larr; Your groups</Link>
       <h1 className="text-2xl font-bold mt-2 mb-6">Account</h1>
 
@@ -137,6 +138,7 @@ export default function Account() {
           <Trash2 size={16} /> Delete my account
         </button>
       </form>
+      <BottomNav />
     </div>
   )
 }

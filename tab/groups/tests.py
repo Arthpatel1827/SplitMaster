@@ -397,3 +397,14 @@ class ReceiptTests(GroupTestBase):
     def test_oversized_rejected(self):
         res = self.post_with_file(SimpleUploadedFile('r.png', make_image('PNG') + b'0' * (5 * 1024 * 1024), 'image/png'))
         self.assertEqual(res.status_code, 400)
+
+
+class GroupListTests(GroupTestBase):
+    def test_list_includes_member_count_and_my_balance(self):
+        self.add_expense(self.alice, '90')
+        res = self.as_user(self.bob).get('/api/groups/')
+        self.assertEqual(res.status_code, 200)
+        row = res.data[0]
+        self.assertEqual(row['member_count'], 3)
+        self.assertEqual(D(row['my_balance']), D('-30.00'))
+        self.assertEqual(D(self.as_user(self.alice).get('/api/groups/').data[0]['my_balance']), D('60.00'))

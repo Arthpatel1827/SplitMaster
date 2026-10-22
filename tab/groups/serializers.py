@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
@@ -5,9 +7,20 @@ from .models import Expense, ExpenseSplit, Group
 
 
 class GroupListSerializer(serializers.ModelSerializer):
+    member_count = serializers.SerializerMethodField()
+    my_balance = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
-        fields = ['id', 'name', 'code', 'created_at']
+        fields = ['id', 'name', 'code', 'created_at', 'member_count', 'my_balance']
+
+    def get_member_count(self, group):
+        return group.members.count()
+
+    def get_my_balance(self, group):
+        from .balances import compute_balances
+        user = self.context['request'].user
+        return str(compute_balances(group).get(user.id, Decimal('0.00')))
 
 
 class GroupDetailSerializer(serializers.ModelSerializer):

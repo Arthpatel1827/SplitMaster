@@ -9,7 +9,10 @@
   --color-tealbg: #e1f0ea;
   --color-rust: #a63e20;
   --color-rustbg: #f7e7e0;
-  --color-muted: #8a8578;
+  --color-muted: #6f6a5e;
+  --color-sand: #efeadb;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 body {
