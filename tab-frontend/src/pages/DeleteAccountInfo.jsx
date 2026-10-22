@@ -9,7 +9,7 @@ export default function DeleteAccountInfo() {
       <Link to="/login" className="inline-flex items-center gap-1 -ml-2 h-11 pr-3 text-sm font-semibold text-[#5f5a4d]">
         <ChevronLeft size={22} strokeWidth={2.4} /> Back
       </Link>
-      <h1 className="text-3xl font-extrabold tracking-tight mt-1">Delete your Tab account</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight mt-1">Delete your SplitMaster account</h1>
 
       <h2 className="text-lg font-extrabold mt-6 mb-2">In the app</h2>
       <ol className="list-decimal pl-5 space-y-1.5">

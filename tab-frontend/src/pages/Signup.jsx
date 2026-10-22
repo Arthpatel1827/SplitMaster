@@ -32,8 +32,8 @@ export default function Signup() {
   return (
     <div className="max-w-sm mx-auto px-5 pt-14 pb-10 animate-[fadeIn_0.25s_ease-out]">
       <div className="text-center mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-teal text-white font-extrabold text-xl flex items-center justify-center mx-auto mb-4">T.</div>
-        <div className="text-[13px] tracking-widest text-muted uppercase font-bold">Tab</div>
+        <div className="w-12 h-12 rounded-2xl bg-teal text-white font-extrabold text-xl flex items-center justify-center mx-auto mb-4">S.</div>
+        <div className="text-[13px] tracking-widest text-muted uppercase font-bold">SplitMaster</div>
         <h1 className="text-3xl font-extrabold tracking-tight mt-1">Split expenses, no limits</h1>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">

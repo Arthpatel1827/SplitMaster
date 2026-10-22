@@ -95,7 +95,7 @@ class PasswordResetRequestView(APIView):
             token = default_token_generator.make_token(user)
             link = f'{settings.FRONTEND_URL}/reset-password?uid={uid}&token={token}'
             send_mail(
-                'Reset your Tab password',
+                'Reset your SplitMaster password',
                 f'Hi {user.username},\n\nUse this link to choose a new password:\n{link}\n\n'
                 'If you did not ask for this, you can ignore this email.',
                 settings.DEFAULT_FROM_EMAIL,

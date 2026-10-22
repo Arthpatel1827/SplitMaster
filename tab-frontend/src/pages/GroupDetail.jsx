@@ -193,7 +193,7 @@ export default function GroupDetail() {
               <div className="text-center py-10 mb-6 bg-white border border-dashed border-line rounded-2xl">
                 <Receipt size={28} className="mx-auto mb-2 text-muted opacity-60" />
                 <div className="font-bold">Add your first expense</div>
-                <p className="text-muted text-sm mt-1">Split a bill and Tab does the math.</p>
+                <p className="text-muted text-sm mt-1">Split a bill and SplitMaster does the math.</p>
               </div>
             ) : (
               <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-sand mb-6 overflow-hidden">

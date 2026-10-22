@@ -14,11 +14,11 @@ export default function Privacy() {
         <ChevronLeft size={22} strokeWidth={2.4} /> Back
       </Link>
       <h1 className="text-3xl font-extrabold tracking-tight mt-1">Privacy Policy</h1>
-      <p className="text-muted text-sm mt-1">Tab · Last updated October 22, 2026</p>
+      <p className="text-muted text-sm mt-1">SplitMaster · Last updated October 22, 2026</p>
 
       <p className="mt-5">
-        Tab is an app for splitting shared expenses with friends, roommates and travel groups. This page explains
-        what information Tab collects, why, and the choices you have.
+        SplitMaster is an app for splitting shared expenses with friends, roommates and travel groups. This page explains
+        what information SplitMaster collects, why, and the choices you have.
       </p>
 
       <H>Information we collect</H>
@@ -29,7 +29,7 @@ export default function Privacy() {
         <li><b>Technical data:</b> standard server logs (such as IP address and request time) kept by our hosting providers for security and troubleshooting.</li>
       </ul>
       <p className="mt-3">
-        Tab does not collect your location, contacts, or advertising identifiers, and contains no ads or third-party analytics.
+        SplitMaster does not collect your location, contacts, or advertising identifiers, and contains no ads or third-party analytics.
       </p>
 
       <H>How we use it</H>
@@ -69,7 +69,7 @@ export default function Privacy() {
       </p>
 
       <H>Children</H>
-      <p>Tab is not directed at children under 13, and we do not knowingly collect their information.</p>
+      <p>SplitMaster is not directed at children under 13, and we do not knowingly collect their information.</p>
 
       <H>Changes</H>
       <p>If we change this policy we will update the date above.</p>

@@ -1,4 +1,4 @@
-# Publishing Tab on Google Play
+# Publishing SplitMaster on Google Play
 
 App id: `com.arthpatel.tab` (permanent once published; change it in `tab-frontend/capacitor.config.json`
 and `tab-frontend/android/app/build.gradle` before your first upload if you want a different one).
@@ -31,7 +31,7 @@ In Play Console keep "Play App Signing" on (default); this key is your *upload* 
 Or build locally with Android Studio: `cd tab-frontend && npm run build && npx cap sync android && npx cap open android`.
 
 ## 4. Play Console
-- Create app -> Tab -> App or game: App; Free.
+- Create app -> SplitMaster -> App or game: App; Free.
 - Closed testing -> create release -> upload the `.aab` -> add 12+ testers (email list) -> publish; keep them
   opted in for 14 days. Then apply for production.
 - Store listing (below), icon `tab-frontend/assets/play-store-icon-512.png`, feature graphic
@@ -40,13 +40,13 @@ Or build locally with Android Studio: `cd tab-frontend && npm run build && npx c
   Ads: No.
 
 ## 5. Store listing text
-**App name** (30 max): `Tab: Split Expenses`
+**App name** (30 max): `SplitMaster: Split Expenses`
 
 **Short description** (80 max): `Split bills with friends, see who owes whom, and settle up. No expense limits.`
 
 **Full description**
 ```
-Tab makes sharing costs simple. Create a group, add expenses, and Tab keeps track of who owes whom, with no limit on how many expenses you can add.
+SplitMaster makes sharing costs simple. Create a group, add expenses, and it keeps track of who owes whom, with no limit on how many expenses you can add.
 
 SPLIT IT YOUR WAY
 - Equal, exact amounts, percentages, or shares
@@ -69,7 +69,7 @@ Category: Finance (or Lifestyle). Tags: expense sharing, bill splitting.
 
 ## 6. Data safety form (recommended answers - double-check against Google's current definitions)
 - Collected data: **Personal info -> Name/User IDs** (username) and **Email address** (optional); **Financial info -> Other financial info**
-  (expense amounts users enter; Tab does not process payments); **Photos** (receipt photos the user chooses);
+  (expense amounts users enter; SplitMaster does not process payments); **Photos** (receipt photos the user chooses);
   **App activity -> Other user-generated content** (notes, group names).
 - Purpose: App functionality, Account management. Not used for advertising or analytics.
 - Shared with third parties: No (hosting providers acting as service providers are not "sharing").
