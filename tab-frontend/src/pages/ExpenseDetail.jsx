@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import Tesseract from 'tesseract.js'
 import client from '../api/client'
 import { scanReceiptTotal } from '../utils/scanReceipt'
-import { Receipt, Check, Undo2, X, ArrowLeft } from 'lucide-react'
+import { Receipt, Check, Undo2, ChevronLeft, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import { LoadingScreen } from '../components/Spinner'
 import { getErrorMessage } from '../utils/errors'
 import { useToast } from '../context/ToastContext'
@@ -293,31 +293,50 @@ export default function ExpenseDetail() {
     )
   }
 
-  return (
-    <div className="max-w-md mx-auto px-5 py-6">
-      <Link to={`/groups/${code}`} className="text-muted text-sm">&larr; {group.name}</Link>
+  const kindStyle = expense.kind === 'payment'
+    ? { tile: 'bg-tealbg text-teal', label: 'Settle-up', labelCls: 'bg-tealbg text-teal' }
+    : expense.kind === 'refund'
+      ? { tile: 'bg-rustbg text-rust', label: 'Refund', labelCls: 'bg-rustbg text-rust' }
+      : { tile: 'bg-sand text-[#5f5a4d]', label: 'Expense', labelCls: 'bg-sand text-[#5f5a4d]' }
+  const totalAbs = Math.abs(parseFloat(expense.amount)) || 1
+  const fmt = (v) => `${parseFloat(v) < 0 ? '-' : ''}$${Math.abs(parseFloat(v)).toFixed(2)}`
+  const AVATARS = ['bg-tealbg text-teal', 'bg-rustbg text-rust', 'bg-sand text-[#5f5a4d]', 'bg-ink text-paper']
 
-      <div className="text-center mt-4 mb-6">
-        <div className="w-14 h-14 rounded-[18px] bg-sand flex items-center justify-center mx-auto mb-3">
-          {expense.kind === 'payment' ? <Check size={28} className="text-teal" /> :
-            expense.kind === 'refund' ? <Undo2 size={28} className="text-rust" /> :
-              <Receipt size={28} />}
+  return (
+    <div className="max-w-md mx-auto px-5 pt-5 pb-10 animate-[fadeIn_0.25s_ease-out]">
+      <Link to={`/groups/${code}`} aria-label={`Back to ${group.name}`} className="inline-flex items-center gap-1 -ml-2 h-11 pr-3 text-sm font-semibold text-[#5f5a4d]">
+        <ChevronLeft size={22} strokeWidth={2.4} /> {group.name}
+      </Link>
+
+      <div className="bg-white border border-[#e6e2d6] rounded-[28px] px-5 py-7 text-center mt-1 mb-4">
+        <div className={`w-16 h-16 rounded-[20px] flex items-center justify-center mx-auto mb-4 ${kindStyle.tile}`}>
+          {expense.kind === 'payment' ? <Check size={30} strokeWidth={2.4} /> :
+            expense.kind === 'refund' ? <Undo2 size={30} /> :
+              <Receipt size={30} />}
+        </div>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className={`text-xs font-extrabold rounded-full px-2.5 py-1 ${kindStyle.labelCls}`}>{kindStyle.label}</span>
+          {expense.is_refunded && (
+            <span className="text-xs font-extrabold rounded-full px-2.5 py-1 bg-rustbg text-rust">Refunded</span>
+          )}
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight">{expense.description}</h1>
-        <div className="text-4xl font-extrabold tracking-tight mt-1">${expense.amount}</div>
-        <div className="text-sm text-muted mt-1">{new Date(expense.created_at).toLocaleString()}</div>
+        <div className="text-[44px] leading-tight font-extrabold tracking-tight mt-1">{fmt(expense.amount)}</div>
+        <div className="inline-flex items-center gap-1.5 text-sm text-muted font-medium mt-2">
+          <CalendarDays size={15} />
+          {new Date(expense.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+        </div>
       </div>
 
-      <div className="bg-white border border-[#e6e2d6] rounded-[20px] p-4 mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-tealbg flex items-center justify-center text-xs font-semibold text-teal">
-            {initials(expense.paid_by.username)}
-          </div>
-          <div>
-            <div className="text-xs text-muted">Paid by</div>
-            <div className="font-semibold">{expense.paid_by.username}</div>
-          </div>
+      <div className="flex items-center gap-3 bg-white border border-[#e6e2d6] rounded-[20px] p-3.5 mb-4">
+        <div className="w-11 h-11 rounded-full bg-tealbg text-teal flex items-center justify-center text-sm font-extrabold">
+          {initials(expense.paid_by.username)}
         </div>
+        <div className="flex-1">
+          <div className="text-xs text-muted font-semibold">Paid by</div>
+          <div className="font-extrabold">{expense.paid_by.username}</div>
+        </div>
+        <div className="font-mono text-sm text-muted">{fmt(expense.amount)}</div>
       </div>
 
       {expense.notes && (
@@ -331,7 +350,7 @@ export default function ExpenseDetail() {
         <div className="mb-4">
           <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Receipt</div>
           <a href={expense.receipt} target="_blank" rel="noreferrer">
-            <img src={expense.receipt} className="rounded-2xl border border-line w-full" />
+            <img src={expense.receipt} alt="Receipt" className="rounded-[20px] border border-[#e6e2d6] w-full" />
           </a>
         </div>
       )}
@@ -339,44 +358,46 @@ export default function ExpenseDetail() {
       <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">
         Split between {expense.splits.length} {expense.splits.length === 1 ? 'person' : 'people'}
       </div>
-      <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-line mb-6">
-        {expense.splits.map((s) => (
-          <div key={s.user.id} className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-paper2 flex items-center justify-center text-xs font-semibold">
-                {initials(s.user.username)}
+      <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-sand mb-6 overflow-hidden">
+        {expense.splits.map((sp, idx) => {
+          const pct = Math.max(0, Math.min(100, (Math.abs(parseFloat(sp.share)) / totalAbs) * 100))
+          return (
+            <div key={sp.user.id} className="px-3.5 py-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-extrabold ${AVATARS[idx % AVATARS.length]}`}>
+                  {initials(sp.user.username)}
+                </div>
+                <span className="flex-1 font-bold text-[15px]">{sp.user.username}</span>
+                <span className="font-mono text-[15px]">{fmt(sp.share)}</span>
               </div>
-              <span className="font-medium">{s.user.username}</span>
+              <div className="h-1.5 rounded-full bg-sand mt-2.5 overflow-hidden" aria-hidden="true">
+                <div className="h-full rounded-full bg-teal" style={{ width: `${pct}%` }} />
+              </div>
             </div>
-            <span className="font-mono font-semibold">${s.share}</span>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      {expense.kind === 'expense' && (
+      {expense.kind !== 'refund' && (
         <>
-          {expense.is_refunded ? (
+          {expense.kind === 'expense' && !expense.is_refunded && (
+            <div className="flex gap-2.5 mb-3">
+              <button onClick={() => setEditing(true)} className="flex-1 h-[52px] rounded-2xl bg-teal text-white font-extrabold flex items-center justify-center gap-2">
+                <Pencil size={17} /> Edit
+              </button>
+              <button onClick={handleRefund} className="flex-1 h-[52px] rounded-2xl border-[1.5px] border-teal text-teal font-bold flex items-center justify-center gap-2">
+                <Undo2 size={17} /> Refund
+              </button>
+            </div>
+          )}
+          {expense.is_refunded && (
             <div className="text-center text-sm text-muted bg-sand rounded-2xl py-3 mb-3">
               This expense has been refunded
             </div>
-          ) : (
-            <button
-              onClick={handleRefund}
-              className="w-full text-teal font-bold h-[54px] rounded-2xl border-[1.5px] border-teal mb-3"
-            >
-              Refund this expense
-            </button>
           )}
-          <div className="flex gap-3">
-            {!expense.is_refunded && (
-              <button onClick={() => setEditing(true)} className="flex-1 bg-teal text-white font-extrabold h-[54px] rounded-2xl">
-                Edit
-              </button>
-            )}
-            <button onClick={handleDelete} className="flex-1 text-rust font-bold h-[54px] rounded-2xl border border-[#cfcab9] bg-white">
-              Delete
-            </button>
-          </div>
+          <button onClick={handleDelete} className="w-full h-[52px] rounded-2xl bg-rustbg text-rust font-bold flex items-center justify-center gap-2">
+            <Trash2 size={17} /> Delete
+          </button>
         </>
       )}
     </div>
