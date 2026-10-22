@@ -12,6 +12,19 @@ if not DEBUG and SECRET_KEY == _DEV_SECRET:
     raise RuntimeError('SECRET_KEY must be set in the environment when DEBUG is False.')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
+# Render exposes the service's public host name automatically; always trust it.
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Safety net: on Render the environment variables must be linked to the service.
+# Without them we would silently run in debug mode on a throwaway SQLite database.
+if config('RENDER', default=False, cast=bool):
+    if DEBUG:
+        raise RuntimeError('DEBUG is True on Render. Link the environment group and set DEBUG=False.')
+    if not config('DATABASE_URL', default=''):
+        raise RuntimeError('DATABASE_URL is not set on Render. Link the environment group that contains it.')
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -134,6 +147,8 @@ CORS_ALLOWED_ORIGINS = config(
 )
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
 if not DEBUG:
     SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
