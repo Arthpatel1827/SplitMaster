@@ -18,4 +18,5 @@ RUN python manage.py collectstatic --no-input
 
 EXPOSE 8000
 
-CMD ["gunicorn", "tab.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Apply database migrations on every start, then serve. Render provides $PORT.
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn tab.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
