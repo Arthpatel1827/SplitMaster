@@ -73,7 +73,10 @@ export default function Signup() {
           {loading ? 'Creating account...' : 'Create account'}
         </button>
       </form>
-      <p className="text-center text-sm text-muted mt-6">
+      <p className="text-center text-xs text-muted mt-5">
+        By creating an account you agree to our <Link to="/privacy" className="underline">Privacy Policy</Link>.
+      </p>
+      <p className="text-center text-sm text-muted mt-4">
         Already have an account? <Link to="/login" className="text-ink font-semibold underline">Log in</Link>
       </p>
     </div>

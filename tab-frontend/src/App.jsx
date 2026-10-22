@@ -8,6 +8,8 @@ import GroupDetail from './pages/GroupDetail'
 import ExpenseDetail from './pages/ExpenseDetail'
 import GroupSettings from './pages/GroupSettings'
 import Account from './pages/Account'
+import Privacy from './pages/Privacy'
+import DeleteAccountInfo from './pages/DeleteAccountInfo'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import { ToastProvider } from './context/ToastContext'
@@ -31,6 +33,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/delete-account" element={<DeleteAccountInfo />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />

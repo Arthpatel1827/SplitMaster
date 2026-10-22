@@ -230,7 +230,7 @@ export default function GroupDetail() {
             <button
               onClick={() => setShowAdd(true)}
               aria-label="Add expense"
-              className="fixed bottom-7 h-14 rounded-full bg-teal text-white flex items-center gap-2 pl-[18px] pr-[22px] font-extrabold text-[15px] shadow-[0_8px_20px_rgba(15,110,86,0.35)] z-20 active:scale-95 transition-transform"
+              className="fixed bottom-[calc(1.75rem+var(--sab))] h-14 rounded-full bg-teal text-white flex items-center gap-2 pl-[18px] pr-[22px] font-extrabold text-[15px] shadow-[0_8px_20px_rgba(15,110,86,0.35)] z-20 active:scale-95 transition-transform"
               style={{ right: 'max(1.25rem, calc(50% - 190px))' }}
             >
               <Plus size={20} strokeWidth={2.6} /> Add expense

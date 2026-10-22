@@ -12,7 +12,7 @@ export default function BottomNav() {
       aria-label="Main"
       className="fixed bottom-0 inset-x-0 z-20 bg-white/90 backdrop-blur border-t border-line"
     >
-      <div className="max-w-md mx-auto flex px-10 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="max-w-md mx-auto flex px-10 pt-2 pb-[max(1rem,var(--sab))]">
         {tabs.map(({ to, label, Icon }) => (
           <NavLink
             key={to}

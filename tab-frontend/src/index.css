@@ -19,3 +19,14 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
 }
+
+/* Safe areas: browsers use env(), the Android app (Capacitor) injects --safe-area-inset-* */
+:root {
+  --sat: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --sab: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+}
+
+body {
+  padding-top: var(--sat);
+  font-family: var(--font-sans);
+}

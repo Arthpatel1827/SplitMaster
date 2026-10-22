@@ -1,0 +1,68 @@
+name: Android release bundle
+
+# Builds a signed .aab you can upload to Google Play. Run it from the Actions tab.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'versionCode (integer, must be higher than your last Play upload)'
+        required: true
+        default: '1'
+      version_name:
+        description: 'versionName shown to users, e.g. 1.0.0'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tab-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tab-frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install and build the web app
+        env:
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+          VITE_CONTACT_EMAIL: ${{ secrets.VITE_CONTACT_EMAIL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Decode keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/tab-release.jks"
+
+      - name: Build release bundle
+        working-directory: tab-frontend/android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/tab-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          VERSION_CODE: ${{ inputs.version_code }}
+          VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tab-release-aab
+          path: tab-frontend/android/app/build/outputs/bundle/release/app-release.aab

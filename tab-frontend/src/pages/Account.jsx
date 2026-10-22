@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { LogOut, Trash2, User, Lock } from 'lucide-react'
 import client from '../api/client'
 import { useAuth } from '../context/AuthContext'
@@ -141,6 +141,9 @@ export default function Account() {
           Delete my account
         </button>
       </form>
+      <p className="text-center text-xs text-muted mt-6">
+        <Link to="/privacy" className="underline">Privacy Policy</Link>
+      </p>
       <BottomNav />
     </div>
   )
