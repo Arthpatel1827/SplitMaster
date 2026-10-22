@@ -6,11 +6,15 @@ import { scanReceiptTotal } from '../utils/scanReceipt'
 import { getErrorMessage } from '../utils/errors'
 import ExpenseFormFields from './ExpenseFormFields'
 import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function AddExpenseModal({ code, members, onClose, onSaved }) {
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
-  const [paidBy, setPaidBy] = useState(members[0]?.id || '')
+  const { user } = useAuth()
+  const [paidBy, setPaidBy] = useState(
+    (members.find((m) => m.id === user?.id) || members[0])?.id || '',
+  )
   const [splitAmong, setSplitAmong] = useState(members.map((m) => m.id))
   const [splitType, setSplitType] = useState('equal')
   const [shares, setShares] = useState({})
