@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { LogIn, User, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Spinner from '../components/Spinner'
+import { getErrorMessage } from '../utils/errors'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -19,8 +20,8 @@ export default function Login() {
     try {
       await login(username, password)
       navigate('/groups')
-    } catch {
-      setError('Invalid username or password.')
+    } catch (err) {
+      setError(err.response?.status === 401 ? 'Invalid username or password.' : getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -53,6 +54,9 @@ export default function Login() {
           />
         </div>
         {error && <p className="text-rust text-sm">{error}</p>}
+        <div className="text-right -mt-2">
+          <Link to="/forgot-password" className="text-sm text-muted hover:text-ink underline">Forgot password?</Link>
+        </div>
         <button
           className="w-full bg-ink text-paper font-semibold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"
           type="submit"

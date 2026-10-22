@@ -1,15 +1,17 @@
 import json
 from decimal import Decimal, InvalidOperation
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.db.models import Q
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 
-from .api_helpers import get_member_group
+from .api_helpers import BALANCE_TOLERANCE, get_member_group, parse_money, validate_receipt
 from .balances import compute_balances, compute_pairwise_balances, simplify_debts, log_activity
 from .expense_logic import parse_custom_shares, save_splits
-from .models import Group, Membership,  ActivityLog, Expense, ExpenseSplit
+from .models import Group, Membership, ActivityLog, Expense, ExpenseSplit
 from .serializers import (
     CreateGroupSerializer,
     GroupDetailSerializer,
@@ -94,12 +96,7 @@ class ExpenseListCreateView(APIView):
         if not description:
             return Response({'detail': 'Description is required.'}, status=400)
 
-        try:
-            amount = Decimal(str(data.get('amount')))
-        except (InvalidOperation, TypeError):
-            return Response({'detail': 'Enter a valid amount.'}, status=400)
-        if amount <= 0:
-            return Response({'detail': 'Amount must be greater than zero.'}, status=400)
+        amount = parse_money(data.get('amount'))
 
         members_by_id = {u.id: u for u in group.members.all()}
         try:
@@ -116,6 +113,8 @@ class ExpenseListCreateView(APIView):
             return Response({'detail': 'Select at least one person to split with.'}, status=400)
 
         split_type = data.get('split_type', Expense.SPLIT_EQUAL)
+        if split_type not in dict(Expense.SPLIT_TYPE_CHOICES):
+            return Response({'detail': 'Invalid split type.'}, status=400)
         custom_shares = None
         if split_type != Expense.SPLIT_EQUAL:
             shares_raw = _parse_json_field(data.get('shares'), {})
@@ -123,12 +122,17 @@ class ExpenseListCreateView(APIView):
             if error:
                 return Response({'detail': error}, status=400)
 
-        expense = Expense.objects.create(
-            group=group, description=description, amount=amount, paid_by=paid_by,
-            split_type=split_type, notes=data.get('notes', ''),
-            receipt=request.FILES.get('receipt'),
-        )
-        save_splits(expense, split_among, amount, split_type, custom_shares)
+        receipt = request.FILES.get('receipt')
+        if receipt:
+            validate_receipt(receipt)
+
+        with transaction.atomic():
+            expense = Expense.objects.create(
+                group=group, description=description, amount=amount, paid_by=paid_by,
+                split_type=split_type, notes=str(data.get('notes', ''))[:5000],
+                receipt=receipt,
+            )
+            save_splits(expense, split_among, amount, split_type, custom_shares)
         log_activity(group, request.user, f'{request.user.username} added "{description}" (${amount})')
         return Response(ExpenseDetailSerializer(expense, context={'request': request}).data, status=201)
 
@@ -144,6 +148,10 @@ class ExpenseDetailView(APIView):
     def put(self, request, code, pk):
         group = get_member_group(request.user, code)
         expense = get_object_or_404_expense(group, pk)
+        if expense.kind != Expense.EXPENSE:
+            return Response({'detail': "Payments and refunds can't be edited."}, status=400)
+        if expense.is_refunded:
+            return Response({'detail': "A refunded expense can't be edited."}, status=400)
         data = request.data
 
         old_description, old_amount, old_paid_by = expense.description, expense.amount, expense.paid_by
@@ -152,10 +160,7 @@ class ExpenseDetailView(APIView):
         description = str(data.get('description', '')).strip()
         if not description:
             return Response({'detail': 'Description is required.'}, status=400)
-        try:
-            amount = Decimal(str(data.get('amount')))
-        except (InvalidOperation, TypeError):
-            return Response({'detail': 'Enter a valid amount.'}, status=400)
+        amount = parse_money(data.get('amount'))
 
         members_by_id = {u.id: u for u in group.members.all()}
         try:
@@ -172,6 +177,8 @@ class ExpenseDetailView(APIView):
             return Response({'detail': 'Select at least one person to split with.'}, status=400)
 
         split_type = data.get('split_type', Expense.SPLIT_EQUAL)
+        if split_type not in dict(Expense.SPLIT_TYPE_CHOICES):
+            return Response({'detail': 'Invalid split type.'}, status=400)
         custom_shares = None
         if split_type != Expense.SPLIT_EQUAL:
             shares_raw = _parse_json_field(data.get('shares'), {})
@@ -183,11 +190,16 @@ class ExpenseDetailView(APIView):
         expense.amount = amount
         expense.paid_by = paid_by
         expense.split_type = split_type
-        expense.notes = data.get('notes', expense.notes)
-        if request.FILES.get('receipt'):
-            expense.receipt = request.FILES['receipt']
-        expense.save()
-        save_splits(expense, split_among, amount, split_type, custom_shares)
+        expense.notes = str(data.get('notes', expense.notes))[:5000]
+        new_receipt = request.FILES.get('receipt')
+        if new_receipt:
+            validate_receipt(new_receipt)
+            expense.receipt = new_receipt
+        elif str(data.get('remove_receipt', '')).lower() in ('1', 'true'):
+            expense.receipt = None
+        with transaction.atomic():
+            expense.save()
+            save_splits(expense, split_among, amount, split_type, custom_shares)
 
         changes = []
         if old_description != description:
@@ -214,6 +226,8 @@ class ExpenseDetailView(APIView):
     def delete(self, request, code, pk):
         group = get_member_group(request.user, code)
         expense = get_object_or_404_expense(group, pk)
+        if expense.kind == Expense.REFUND:
+            return Response({'detail': "Refunds can't be deleted."}, status=400)
         description = expense.description
         expense.delete()
         log_activity(group, request.user, f'{request.user.username} deleted "{description}"')
@@ -228,15 +242,16 @@ class RefundExpenseView(APIView):
         if original.is_refunded:
             return Response({'detail': 'This expense has already been refunded.'}, status=400)
 
-        refund = Expense.objects.create(
-            group=group, kind=Expense.REFUND, description=f'Refund: {original.description}',
-            amount=-original.amount, paid_by=original.paid_by, split_type=original.split_type,
-        )
-        for s in original.splits.all():
-            ExpenseSplit.objects.create(expense=refund, user=s.user, share=-s.share)
+        with transaction.atomic():
+            refund = Expense.objects.create(
+                group=group, kind=Expense.REFUND, description=f'Refund: {original.description}',
+                amount=-original.amount, paid_by=original.paid_by, split_type=original.split_type,
+            )
+            for s in original.splits.all():
+                ExpenseSplit.objects.create(expense=refund, user=s.user, share=-s.share)
 
-        original.is_refunded = True
-        original.save()
+            original.is_refunded = True
+            original.save()
         log_activity(group, request.user, f'{request.user.username} refunded "{original.description}" (${original.amount})')
         return Response(ExpenseDetailSerializer(original, context={'request': request}).data)
 
@@ -244,27 +259,48 @@ class RefundExpenseView(APIView):
 class RecordPaymentView(APIView):
     def post(self, request, code):
         group = get_member_group(request.user, code)
-        try:
-            from_user = User.objects.get(id=request.data.get('from_user'))
-            to_user = User.objects.get(id=request.data.get('to_user'))
-            amount = Decimal(str(request.data.get('amount')))
-        except (User.DoesNotExist, InvalidOperation, TypeError, ValueError):
-            return Response({'detail': 'Invalid payment data.'}, status=400)
+        amount = parse_money(request.data.get('amount'))
 
-        expense = Expense.objects.create(
-            group=group, kind=Expense.PAYMENT, description=f'{from_user.username} paid {to_user.username}',
-            amount=amount, paid_by=from_user,
-        )
-        ExpenseSplit.objects.create(expense=expense, user=to_user, share=amount)
+        member_ids = set(group.members.values_list('id', flat=True))
+        try:
+            from_id = int(request.data.get('from_user'))
+            to_id = int(request.data.get('to_user'))
+        except (TypeError, ValueError):
+            return Response({'detail': 'Invalid payment data.'}, status=400)
+        if from_id == to_id:
+            return Response({'detail': "You can't record a payment to the same person."}, status=400)
+        # Both sides of a settlement must belong to this group.
+        if from_id not in member_ids or to_id not in member_ids:
+            return Response({'detail': 'Both people must be members of this group.'}, status=400)
+
+        from_user = User.objects.get(id=from_id)
+        to_user = User.objects.get(id=to_id)
+
+        with transaction.atomic():
+            expense = Expense.objects.create(
+                group=group, kind=Expense.PAYMENT,
+                description=f'{from_user.username} paid {to_user.username}',
+                amount=amount, paid_by=from_user,
+            )
+            ExpenseSplit.objects.create(expense=expense, user=to_user, share=amount)
         log_activity(group, request.user, f'{from_user.username} paid {to_user.username} (${amount})')
         return Response(ExpenseDetailSerializer(expense, context={'request': request}).data, status=201)
+
+
+def users_for_group(group):
+    """Current members plus anyone who still appears in the group's expenses (e.g. former members)."""
+    return {
+        u.id: u for u in User.objects.filter(
+            Q(tab_groups=group) | Q(expenses_paid__group=group) | Q(expense_splits__expense__group=group)
+        ).distinct()
+    }
 
 
 class BalancesView(APIView):
     def get(self, request, code):
         group = get_member_group(request.user, code)
-        members = list(group.members.all())
-        users_by_id = {u.id: u for u in members}
+        users_by_id = users_for_group(group)
+        member_ids = set(group.members.values_list('id', flat=True))
         balances = compute_balances(group)
 
         if group.simplify_debts:
@@ -277,6 +313,7 @@ class BalancesView(APIView):
             'balances': [
                 {'user': UserSerializer(users_by_id[uid]).data, 'amount': str(amt)}
                 for uid, amt in balances.items()
+                if uid in member_ids or abs(amt) > BALANCE_TOLERANCE
             ],
             'settle_txns': [
                 {'from_user': UserSerializer(t['from_user']).data,
@@ -312,6 +349,7 @@ class GroupSettingsView(APIView):
             'code': group.code,
             'simplify_debts': group.simplify_debts,
             'is_creator': group.created_by_id == request.user.id,
+            'creator_username': group.created_by.username if group.created_by else None,
         })
 
     def patch(self, request, code):
@@ -338,6 +376,7 @@ class GroupSettingsView(APIView):
             'code': group.code,
             'simplify_debts': group.simplify_debts,
             'is_creator': group.created_by_id == request.user.id,
+            'creator_username': group.created_by.username if group.created_by else None,
         })
 
 
@@ -347,12 +386,48 @@ class LeaveGroupView(APIView):
         balances = compute_balances(group)
         my_balance = balances.get(request.user.id, Decimal('0.00'))
 
-        if abs(my_balance) > Decimal('0.005'):
+        if abs(my_balance) > BALANCE_TOLERANCE:
             return Response({'detail': "You can't leave until you're settled up in this group."}, status=400)
 
-        from .models import Membership
-        Membership.objects.filter(user=request.user, group=group).delete()
+        with transaction.atomic():
+            Membership.objects.filter(user=request.user, group=group).delete()
+            remaining = Membership.objects.filter(group=group).order_by('joined_at').select_related('user')
+            if group.created_by_id == request.user.id and remaining.exists():
+                # hand ownership to the longest-standing member so the group can still be managed
+                new_owner = remaining.first().user
+                group.created_by = new_owner
+                group.save(update_fields=['created_by'])
+                log_activity(group, new_owner, f'{new_owner.username} is now the group owner')
+            if not remaining.exists():
+                group.delete()
+                return Response(status=204)
         log_activity(group, request.user, f'{request.user.username} left the group')
+        return Response(status=204)
+
+
+class RemoveMemberView(APIView):
+    def delete(self, request, code, user_id):
+        group = get_member_group(request.user, code)
+
+        if group.created_by_id != request.user.id:
+            return Response({'detail': 'Only the group creator can remove members.'}, status=403)
+        if user_id == request.user.id:
+            return Response({'detail': 'Use "Leave group" to remove yourself.'}, status=400)
+
+        membership = Membership.objects.filter(group=group, user_id=user_id).select_related('user').first()
+        if membership is None:
+            return Response({'detail': 'That person is not in this group.'}, status=404)
+
+        balance = compute_balances(group).get(user_id, Decimal('0.00'))
+        if abs(balance) > BALANCE_TOLERANCE:
+            return Response(
+                {'detail': f"{membership.user.username} still has an unsettled balance. Settle up before removing them."},
+                status=400,
+            )
+
+        removed = membership.user
+        membership.delete()
+        log_activity(group, request.user, f'{request.user.username} removed {removed.username} from the group')
         return Response(status=204)
 
 
@@ -364,7 +439,7 @@ class DeleteGroupView(APIView):
             return Response({'detail': 'Only the group creator can delete this group.'}, status=403)
 
         balances = compute_balances(group)
-        if any(abs(b) > Decimal('0.005') for b in balances.values()):
+        if any(abs(b) > BALANCE_TOLERANCE for b in balances.values()):
             return Response({'detail': "You can't delete a group with unsettled balances."}, status=400)
 
         group.delete()

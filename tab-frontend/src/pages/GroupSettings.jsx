@@ -1,24 +1,38 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { LogOut, Trash2 } from 'lucide-react'
+import { LogOut, Trash2, UserMinus } from 'lucide-react'
 import client from '../api/client'
 import { LoadingScreen } from '../components/Spinner'
+import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
+import { useConfirm } from '../components/ConfirmProvider'
+import { getErrorMessage } from '../utils/errors'
 
 export default function GroupSettings() {
   const { code } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const toast = useToast()
+  const confirm = useConfirm()
+  const [members, setMembers] = useState([])
   const [settings, setSettings] = useState(null)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = async () => {
-    const { data } = await client.get(`/groups/${code}/settings/`)
-    setSettings(data)
-    setName(data.name)
+    const [s, g] = await Promise.all([
+      client.get(`/groups/${code}/settings/`),
+      client.get(`/groups/${code}/`),
+    ])
+    setSettings(s.data)
+    setMembers(g.data.members)
+    setName(s.data.name)
   }
 
-  useEffect(() => { load() }, [code])
+  useEffect(() => {
+    load().catch((err) => setError(getErrorMessage(err, 'Could not load settings.')))
+  }, [code])
 
   const saveName = async (e) => {
     e.preventDefault()
@@ -27,40 +41,85 @@ export default function GroupSettings() {
     try {
       const { data } = await client.patch(`/groups/${code}/settings/`, { name })
       setSettings(data)
-    } catch {
-      setError('Enter a valid group name.')
+      toast.success('Group renamed')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Enter a valid group name.'))
     } finally {
       setSaving(false)
     }
   }
 
   const toggleSimplify = async () => {
-    const { data } = await client.patch(`/groups/${code}/settings/`, {
-      simplify_debts: !settings.simplify_debts,
+    try {
+      const { data } = await client.patch(`/groups/${code}/settings/`, {
+        simplify_debts: !settings.simplify_debts,
+      })
+      setSettings(data)
+      toast.success(data.simplify_debts ? 'Simplified settle-up on' : 'Simplified settle-up off')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Could not change that setting.'))
+    }
+  }
+
+  const removeMember = async (m) => {
+    const ok = await confirm({
+      title: `Remove ${m.username}?`,
+      message: "They'll lose access to this group. You can only remove someone who is fully settled up.",
+      confirmLabel: 'Remove',
+      danger: true,
     })
-    setSettings(data)
+    if (!ok) return
+    try {
+      await client.delete(`/groups/${code}/members/${m.id}/`)
+      toast.success(`${m.username} removed`)
+      setMembers((list) => list.filter((x) => x.id !== m.id))
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Could not remove that member.'))
+    }
   }
 
   const leaveGroup = async () => {
-    if (!confirm("Leave this group? You can only leave once you're fully settled up.")) return
+    const ok = await confirm({
+      title: 'Leave this group?',
+      message: "You can only leave once you're fully settled up.",
+      confirmLabel: 'Leave',
+      danger: true,
+    })
+    if (!ok) return
     try {
       await client.post(`/groups/${code}/leave/`)
+      toast.success('You left the group')
       navigate('/groups')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Could not leave the group.')
+      toast.error(getErrorMessage(err, 'Could not leave the group.'))
     }
   }
 
   const deleteGroup = async () => {
-    if (!confirm('Delete this group permanently? This removes all expenses and activity. This cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete this group?',
+      message: 'This permanently removes all expenses and activity for everyone. This cannot be undone.',
+      confirmLabel: 'Delete group',
+      danger: true,
+    })
+    if (!ok) return
     try {
       await client.delete(`/groups/${code}/delete/`)
+      toast.success('Group deleted')
       navigate('/groups')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Could not delete the group.')
+      toast.error(getErrorMessage(err, 'Could not delete the group.'))
     }
   }
 
+  if (!settings && error) {
+    return (
+      <div className="max-w-md mx-auto px-5 py-10 text-center">
+        <p className="text-rust text-sm mb-4">{error}</p>
+        <Link to={`/groups/${code}`} className="underline text-sm">Back to group</Link>
+      </div>
+    )
+  }
   if (!settings) return <LoadingScreen />
 
   return (
@@ -106,6 +165,28 @@ export default function GroupSettings() {
             }`}
           />
         </button>
+      </div>
+
+      <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Members</div>
+      <div className="bg-white border border-line rounded-2xl divide-y divide-line mb-6">
+        {members.map((m) => (
+          <div key={m.id} className="flex items-center justify-between px-4 py-3">
+            <div>
+              <span className="font-medium">{m.username}</span>
+              {m.id === user?.id && <span className="text-xs text-muted ml-2">you</span>}
+              {m.username === settings.creator_username && <span className="text-xs text-teal ml-2">owner</span>}
+            </div>
+            {settings.is_creator && m.id !== user?.id && (
+              <button
+                onClick={() => removeMember(m)}
+                aria-label={`Remove ${m.username}`}
+                className="text-rust p-1.5 rounded-lg hover:bg-rustbg transition-colors"
+              >
+                <UserMinus size={18} />
+              </button>
+            )}
+          </div>
+        ))}
       </div>
 
       <div className="text-xs uppercase tracking-wide text-muted font-semibold mb-2">Danger zone</div>

@@ -5,6 +5,9 @@ import client from '../api/client'
 import { scanReceiptTotal } from '../utils/scanReceipt'
 import { Receipt, Check, Undo2, X, ArrowLeft } from 'lucide-react'
 import { LoadingScreen } from '../components/Spinner'
+import { getErrorMessage } from '../utils/errors'
+import { useToast } from '../context/ToastContext'
+import { useConfirm } from '../components/ConfirmProvider'
 
 function initials(name) {
   return name.slice(0, 2).toUpperCase()
@@ -17,6 +20,10 @@ export default function ExpenseDetail() {
   const [expense, setExpense] = useState(null)
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [removeReceipt, setRemoveReceipt] = useState(false)
+  const toast = useToast()
+  const confirm = useConfirm()
 
   // edit form state
   const [description, setDescription] = useState('')
@@ -45,9 +52,33 @@ export default function ExpenseDetail() {
     setSplitType(e.data.split_type)
     setNotes(e.data.notes || '')
     setPreview(e.data.receipt || null)
+    setRemoveReceipt(false)
+    setReceiptFile(null)
+    // prefill custom split values so editing doesn't start from blank inputs
+    const total = parseFloat(e.data.amount) || 0
+    const prefill = {}
+    e.data.splits.forEach((s) => {
+      if (e.data.split_type === 'percent') {
+        prefill[s.user.id] = total ? String(Math.round((parseFloat(s.share) / total) * 10000) / 100) : ''
+      } else {
+        prefill[s.user.id] = s.share // exact amounts; for "shares" the amounts keep the same ratios
+      }
+    })
+    setShares(e.data.split_type === 'equal' ? {} : prefill)
   }
 
-  useEffect(() => { load() }, [code, id])
+  useEffect(() => {
+    load().catch((err) => setLoadError(getErrorMessage(err, 'Could not load this expense.')))
+  }, [code, id])
+
+  if (loadError) {
+    return (
+      <div className="max-w-md mx-auto px-5 py-10 text-center">
+        <p className="text-rust text-sm mb-4">{loadError}</p>
+        <Link to={`/groups/${code}`} className="underline text-sm">Back to group</Link>
+      </div>
+    )
+  }
 
   if (!group || !expense) return <LoadingScreen />
 
@@ -61,6 +92,7 @@ export default function ExpenseDetail() {
     const file = e.target.files[0]
     if (!file) return
     setReceiptFile(file)
+    setRemoveReceipt(false)
     setPreview(URL.createObjectURL(file))
     setScanning(true)
     try {
@@ -92,29 +124,52 @@ export default function ExpenseDetail() {
       form.append('shares', JSON.stringify(shares))
       form.append('notes', notes)
       if (receiptFile) form.append('receipt', receiptFile)
+      if (removeReceipt && !receiptFile) form.append('remove_receipt', 'true')
 
       await client.put(`/groups/${code}/expenses/${id}/`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setEditing(false)
+      toast.success('Expense updated')
       load()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Could not save changes.')
+      setError(getErrorMessage(err, 'Could not save changes.'))
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('Delete this expense? This cannot be undone.')) return
-    await client.delete(`/groups/${code}/expenses/${id}/`)
-    navigate(`/groups/${code}`)
+    const ok = await confirm({
+      title: 'Delete this expense?',
+      message: 'This removes it from everyone\'s balances. This cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      await client.delete(`/groups/${code}/expenses/${id}/`)
+      toast.success('Expense deleted')
+      navigate(`/groups/${code}`)
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Could not delete the expense.'))
+    }
   }
 
   const handleRefund = async () => {
-    if (!confirm("Refund this expense? This reverses the split for everyone in one step.")) return
-    await client.post(`/groups/${code}/expenses/${id}/refund/`)
-    load()
+    const ok = await confirm({
+      title: 'Refund this expense?',
+      message: 'This reverses the split for everyone. The original expense stays in the history.',
+      confirmLabel: 'Refund',
+    })
+    if (!ok) return
+    try {
+      await client.post(`/groups/${code}/expenses/${id}/refund/`)
+      toast.success('Expense refunded')
+      load()
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Could not refund the expense.'))
+    }
   }
 
   if (editing) {
@@ -213,7 +268,19 @@ export default function ExpenseDetail() {
               <span className="text-sm text-muted">{scanning ? 'Scanning...' : preview ? 'Photo attached — tap to change' : 'Tap to attach a photo'}</span>
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
             </label>
-            {preview && <img src={preview} className="rounded-xl max-h-40 w-auto mt-2" />}
+            {preview && (
+              <div className="relative mt-2 inline-block">
+                <img src={preview} className="rounded-xl max-h-40 w-auto" />
+                <button
+                  type="button"
+                  aria-label="Remove receipt photo"
+                  onClick={() => { setPreview(null); setReceiptFile(null); setRemoveReceipt(true) }}
+                  className="absolute top-1 right-1 w-7 h-7 rounded-full bg-ink/80 text-white flex items-center justify-center"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
           </div>
 
           {error && <p className="text-rust text-sm">{error}</p>}
@@ -301,9 +368,11 @@ export default function ExpenseDetail() {
             </button>
           )}
           <div className="flex gap-3">
-            <button onClick={() => setEditing(true)} className="flex-1 bg-ink text-paper font-semibold py-3 rounded-xl">
-              Edit
-            </button>
+            {!expense.is_refunded && (
+              <button onClick={() => setEditing(true)} className="flex-1 bg-ink text-paper font-semibold py-3 rounded-xl">
+                Edit
+              </button>
+            )}
             <button onClick={handleDelete} className="flex-1 text-rust font-semibold py-3 rounded-xl border border-line">
               Delete
             </button>

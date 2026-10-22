@@ -3,6 +3,8 @@ import Tesseract from 'tesseract.js'
 import { X, Sparkles } from 'lucide-react'
 import client from '../api/client'
 import { scanReceiptTotal } from '../utils/scanReceipt'
+import { getErrorMessage } from '../utils/errors'
+import { useToast } from '../context/ToastContext'
 import Spinner from './Spinner'
 
 export default function AddExpenseModal({ code, members, onClose, onSaved }) {
@@ -19,6 +21,7 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
   const [scanned, setScanned] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const toast = useToast()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
@@ -84,9 +87,10 @@ export default function AddExpenseModal({ code, members, onClose, onSaved }) {
       await client.post(`/groups/${code}/expenses/`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
+      toast.success('Expense added')
       onSaved()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Could not save expense.')
+      setError(getErrorMessage(err, 'Could not save expense.'))
     } finally {
       setSaving(false)
     }

@@ -4,6 +4,8 @@ import { Plus, Check, Undo2, Receipt, Scale, History, ChevronRight, Settings } f
 import client from '../api/client'
 import AddExpenseModal from '../components/AddExpenseModal'
 import { LoadingScreen } from '../components/Spinner'
+import { getErrorMessage } from '../utils/errors'
+import { useToast } from '../context/ToastContext'
 
 function initials(name) {
   return name.slice(0, 2).toUpperCase()
@@ -19,6 +21,7 @@ export default function GroupDetail() {
   const [showAdd, setShowAdd] = useState(false)
   const [error, setError] = useState('')
   const [payingId, setPayingId] = useState(null)
+  const toast = useToast()
 
   const loadGroup = async () => {
     const { data } = await client.get(`/groups/${code}/`)
@@ -37,7 +40,10 @@ export default function GroupDetail() {
     setActivity(data)
   }
 
-  useEffect(() => { loadGroup(); loadExpenses(); loadBalances(); loadActivity() }, [code])
+  useEffect(() => {
+    Promise.all([loadGroup(), loadExpenses(), loadBalances(), loadActivity()])
+      .catch((err) => setError(getErrorMessage(err, 'Could not load this group.')))
+  }, [code])
 
   const recordPayment = async (t, i) => {
     setPayingId(i)
@@ -48,13 +54,22 @@ export default function GroupDetail() {
         amount: t.amount,
       })
       await Promise.all([loadBalances(), loadExpenses(), loadActivity()])
-    } catch {
-      setError('Could not record payment.')
+      toast.success('Payment recorded')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not record payment.'))
     } finally {
       setPayingId(null)
     }
   }
 
+  if (!group && error) {
+    return (
+      <div className="max-w-md mx-auto px-5 py-10 text-center">
+        <p className="text-rust text-sm mb-4">{error}</p>
+        <Link to="/groups" className="underline text-sm">Back to your groups</Link>
+      </div>
+    )
+  }
   if (!group) return <LoadingScreen />
 
   return (

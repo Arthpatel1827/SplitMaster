@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { UserPlus, User, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Spinner from '../components/Spinner'
+import { getErrorMessage } from '../utils/errors'
 
 export default function Signup() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
@@ -17,12 +19,11 @@ export default function Signup() {
     setError('')
     setLoading(true)
     try {
-      await register(username, password)
+      await register(username, password, email)
       navigate('/groups')
     } catch (err) {
       const data = err.response?.data
-      const msg = data?.password?.[0] || data?.username?.[0] || 'Could not create account.'
-      setError(msg)
+      setError(data?.password?.[0] || data?.username?.[0] || data?.email?.[0] || getErrorMessage(err, 'Could not create account.'))
     } finally {
       setLoading(false)
     }
@@ -54,6 +55,13 @@ export default function Signup() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+        <input
+          type="email"
+          className="w-full px-4 py-3 rounded-xl border border-line bg-white outline-none focus:border-ink transition-colors"
+          placeholder="Email (optional, for password reset)"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         {error && <p className="text-rust text-sm">{error}</p>}
         <button
           className="w-full bg-ink text-paper font-semibold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"

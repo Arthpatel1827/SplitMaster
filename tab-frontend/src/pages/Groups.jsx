@@ -1,20 +1,31 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, LogOut, ArrowRight, Users } from 'lucide-react'
+import { Plus, ArrowRight, Users, UserCircle } from 'lucide-react'
 import client from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { LoadingScreen } from '../components/Spinner'
+import { getErrorMessage } from '../utils/errors'
+import { useToast } from '../context/ToastContext'
 
 export default function Groups() {
   const [groups, setGroups] = useState(null)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
+  const toast = useToast()
+
+  const [loadError, setLoadError] = useState('')
 
   const loadGroups = async () => {
-    const { data } = await client.get('/groups/')
-    setGroups(data)
+    try {
+      const { data } = await client.get('/groups/')
+      setGroups(data)
+      setLoadError('')
+    } catch (err) {
+      setLoadError(getErrorMessage(err, 'Could not load your groups.'))
+      setGroups((g) => g ?? [])
+    }
   }
 
   useEffect(() => { loadGroups() }, [])
@@ -25,9 +36,10 @@ export default function Groups() {
     try {
       await client.post('/groups/', { name })
       setName('')
+      toast.success('Group created')
       loadGroups()
-    } catch {
-      setError('Enter a group name.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Enter a group name.'))
     }
   }
 
@@ -37,9 +49,10 @@ export default function Groups() {
     try {
       await client.post('/groups/join/', { code })
       setCode('')
+      toast.success('Joined group')
       loadGroups()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Could not join that group.')
+      setError(getErrorMessage(err, 'Could not join that group.'))
     }
   }
 
@@ -52,12 +65,17 @@ export default function Groups() {
           <div className="text-xs tracking-widest text-muted uppercase font-semibold">Hey {user?.username}</div>
           <h1 className="text-2xl font-bold mt-0.5">Your groups</h1>
         </div>
-        <button onClick={logout} className="flex items-center gap-1.5 text-sm text-muted hover:text-ink transition-colors">
-          <LogOut size={16} /> Log out
-        </button>
+        <Link to="/account" className="flex items-center gap-1.5 text-sm text-muted hover:text-ink transition-colors">
+          <UserCircle size={18} /> Account
+        </Link>
       </div>
 
-      {error && <p className="text-rust text-sm mb-3">{error}</p>}
+      {(error || loadError) && (
+        <p className="text-rust text-sm mb-3">
+          {error || loadError}{' '}
+          {loadError && !error && <button onClick={loadGroups} className="underline">Retry</button>}
+        </p>
+      )}
 
       {groups.length === 0 && (
         <div className="border border-dashed border-line rounded-2xl px-6 py-10 text-center text-muted text-sm mb-6">

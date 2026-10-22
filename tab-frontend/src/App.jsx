@@ -7,6 +7,11 @@ import Groups from './pages/Groups'
 import GroupDetail from './pages/GroupDetail'
 import ExpenseDetail from './pages/ExpenseDetail'
 import GroupSettings from './pages/GroupSettings'
+import Account from './pages/Account'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import { ToastProvider } from './context/ToastContext'
+import { ConfirmProvider } from './components/ConfirmProvider'
 
 function RequireAuth({ children }) {
   const { user, loadUser } = useAuth()
@@ -26,6 +31,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
       <Route path="/groups" element={<RequireAuth><Groups /></RequireAuth>} />
       <Route path="/groups/:code" element={<RequireAuth><GroupDetail /></RequireAuth>} />
       <Route path="/groups/:code/expenses/:id" element={<RequireAuth><ExpenseDetail /></RequireAuth>} />
@@ -37,10 +45,14 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
-    </AuthProvider>
+    <ToastProvider>
+      <ConfirmProvider>
+        <AuthProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </AuthProvider>
+      </ConfirmProvider>
+    </ToastProvider>
   )
 }

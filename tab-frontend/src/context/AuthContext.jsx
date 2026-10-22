@@ -14,12 +14,14 @@ export function AuthProvider({ children }) {
     setUser(me.data)
   }
 
-  const register = async (username, password) => {
-    await client.post('/auth/register/', { username, password })
+  const register = async (username, password, email = '') => {
+    await client.post('/auth/register/', { username, password, ...(email ? { email } : {}) })
     await login(username, password)
   }
 
   const logout = () => {
+    const refresh = localStorage.getItem('refresh')
+    if (refresh) client.post('/auth/logout/', { refresh }).catch(() => {}) // best effort: revokes the token server-side
     localStorage.removeItem('access')
     localStorage.removeItem('refresh')
     setUser(null)
@@ -36,7 +38,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loadUser }}>
+    <AuthContext.Provider value={{ user, setUser, login, register, logout, loadUser }}>
       {children}
     </AuthContext.Provider>
   )
