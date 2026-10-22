@@ -5,6 +5,7 @@ import client from '../api/client'
 import { scanReceiptTotal } from '../utils/scanReceipt'
 import { Receipt, Check, Undo2, ChevronLeft, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import { LoadingScreen } from '../components/Spinner'
+import ExpenseFormFields from '../components/ExpenseFormFields'
 import { getErrorMessage } from '../utils/errors'
 import { useToast } from '../context/ToastContext'
 import { useConfirm } from '../components/ConfirmProvider'
@@ -83,7 +84,6 @@ export default function ExpenseDetail() {
   if (!group || !expense) return <LoadingScreen />
 
   const members = group.members
-  const selectedMembers = members.filter((m) => splitAmong.includes(m.id))
   const toggleMember = (mid) => {
     setSplitAmong((prev) => (prev.includes(mid) ? prev.filter((x) => x !== mid) : [...prev, mid]))
   }
@@ -174,117 +174,30 @@ export default function ExpenseDetail() {
 
   if (editing) {
     return (
-      <div className="max-w-md mx-auto px-5 py-6">
-        <button onClick={() => setEditing(false)} className="text-muted text-sm">&larr; Cancel</button>
-        <h1 className="text-3xl font-extrabold tracking-tight mt-1 mb-6">Edit expense</h1>
+      <div className="max-w-md mx-auto px-5 pt-5 pb-10 animate-[fadeIn_0.25s_ease-out]">
+        <button
+          onClick={() => setEditing(false)}
+          className="inline-flex items-center gap-1 -ml-2 h-11 pr-3 text-sm font-semibold text-[#5f5a4d]"
+        >
+          <ChevronLeft size={22} strokeWidth={2.4} /> Cancel
+        </button>
+        <h1 className="text-3xl font-extrabold tracking-tight mt-1 mb-5">Edit expense</h1>
 
-        <form onSubmit={handleSave} className="space-y-4">
-          <input
-            className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+        <form onSubmit={handleSave} className="space-y-5">
+          <ExpenseFormFields
+            members={members}
+            description={description} setDescription={setDescription}
+            amount={amount} setAmount={setAmount}
+            paidBy={paidBy} setPaidBy={setPaidBy}
+            splitAmong={splitAmong} toggleMember={toggleMember}
+            splitType={splitType} setSplitType={setSplitType}
+            shares={shares} setShares={setShares}
+            notes={notes} setNotes={setNotes}
+            preview={preview} scanning={scanning} scanned={false}
+            onFile={handleFile}
+            onRemovePhoto={() => { setPreview(null); setReceiptFile(null); setRemoveReceipt(true) }}
           />
-          <input
-            type="number" step="0.01"
-            className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-
-          <div>
-            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Paid by</div>
-            <select
-              className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
-              value={paidBy}
-              onChange={(e) => setPaidBy(Number(e.target.value))}
-            >
-              {members.map((m) => <option key={m.id} value={m.id}>{m.username}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Split among</div>
-            <div className="bg-white border border-[#e6e2d6] rounded-[20px] divide-y divide-line">
-              {members.map((m) => (
-                <label key={m.id} className={`flex items-center gap-3 px-4 py-3 cursor-pointer ${splitAmong.includes(m.id) ? 'bg-tealbg' : ''
-                  }`}>
-                  <input
-                    type="checkbox"
-                    checked={splitAmong.includes(m.id)}
-                    onChange={() => toggleMember(m.id)}
-                    className="w-4 h-4"
-                  />
-                  <span className="flex-1 font-medium text-sm">{m.username}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Split type</div>
-            <div className="flex gap-2">
-              {['equal', 'exact', 'percent', 'shares'].map((t) => (
-                <button
-                  type="button" key={t}
-                  onClick={() => setSplitType(t)}
-                  className={`flex-1 py-2.5 rounded-xl border text-xs font-bold capitalize ${splitType === t ? 'bg-teal text-white border-teal' : 'border-line'
-                    }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {splitType !== 'equal' && selectedMembers.length > 0 && (
-            <div className="space-y-2">
-              {selectedMembers.map((m) => (
-                <div key={m.id} className="flex items-center gap-3 bg-white border border-line rounded-xl px-4 py-2.5">
-                  <span className="flex-1 text-sm font-medium">{m.username}</span>
-                  <input
-                    type="number" step="0.01"
-                    className="w-20 text-right font-mono text-sm outline-none"
-                    value={shares[m.id] || ''}
-                    onChange={(e) => setShares({ ...shares, [m.id]: e.target.value })}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div>
-            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Notes</div>
-            <textarea
-              className="w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink"
-              rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <div className="text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2">Receipt photo</div>
-            <label className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-line bg-white cursor-pointer">
-              <span className="text-sm text-muted">{scanning ? 'Scanning...' : preview ? 'Photo attached — tap to change' : 'Tap to attach a photo'}</span>
-              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
-            </label>
-            {preview && (
-              <div className="relative mt-2 inline-block">
-                <img src={preview} className="rounded-xl max-h-40 w-auto" />
-                <button
-                  type="button"
-                  aria-label="Remove receipt photo"
-                  onClick={() => { setPreview(null); setReceiptFile(null); setRemoveReceipt(true) }}
-                  className="absolute top-1 right-1 w-7 h-7 rounded-full bg-ink/80 text-white flex items-center justify-center"
-                >
-                  &times;
-                </button>
-              </div>
-            )}
-          </div>
-
           {error && <p className="text-rust text-sm">{error}</p>}
-
           <button type="submit" disabled={saving} className="w-full bg-teal text-white font-extrabold h-[54px] rounded-2xl disabled:opacity-50">
             {saving ? 'Saving...' : 'Save changes'}
           </button>

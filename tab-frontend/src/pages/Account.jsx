@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { LogOut, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { LogOut, Trash2, User, Lock } from 'lucide-react'
 import client from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -9,7 +9,7 @@ import { getErrorMessage } from '../utils/errors'
 import BottomNav from '../components/BottomNav'
 
 const inputCls = 'w-full h-[54px] px-4 rounded-2xl border-[1.5px] border-line bg-white outline-none focus:border-ink transition-colors'
-const labelCls = 'text-[13px] uppercase tracking-wider text-[#5f5a4d] font-extrabold mb-2'
+const card = 'bg-white border border-[#e6e2d6] rounded-[24px] p-4 space-y-3'
 
 export default function Account() {
   const { user, setUser, logout } = useAuth()
@@ -83,15 +83,20 @@ export default function Account() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-5 pt-6 pb-28 animate-[fadeIn_0.25s_ease-out]">
-      <Link to="/groups" className="text-muted text-sm hover:text-ink transition-colors">&larr; Your groups</Link>
-      <h1 className="text-3xl font-extrabold tracking-tight mt-1 mb-6">Account</h1>
+    <div className="max-w-md mx-auto px-5 pt-7 pb-28 animate-[fadeIn_0.25s_ease-out]">
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="w-20 h-20 rounded-full bg-tealbg text-teal flex items-center justify-center text-3xl font-extrabold">
+          {user?.username?.[0]?.toUpperCase()}
+        </div>
+        <h1 className="text-2xl font-extrabold tracking-tight mt-3">{user?.username}</h1>
+        <div className="text-sm text-muted">{user?.email || 'No email added'}</div>
+      </div>
 
-      <form onSubmit={saveProfile} className="space-y-3 mb-8">
-        <div className={labelCls}>Profile</div>
-        <input className={inputCls} placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+      <form onSubmit={saveProfile} className={`${card} mb-4`}>
+        <div className="flex items-center gap-2 font-extrabold"><User size={18} /> Profile</div>
+        <input aria-label="Username" className={inputCls} placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
         <input
-          type="email" className={inputCls} placeholder="Email (used for password reset)"
+          aria-label="Email" type="email" className={inputCls} placeholder="Email (used for password reset)"
           value={email} onChange={(e) => setEmail(e.target.value)}
         />
         {profileError && <p className="text-rust text-sm">{profileError}</p>}
@@ -100,42 +105,40 @@ export default function Account() {
         </button>
       </form>
 
-      <form onSubmit={changePassword} className="space-y-3 mb-8">
-        <div className={labelCls}>Change password</div>
+      <form onSubmit={changePassword} className={`${card} mb-4`}>
+        <div className="flex items-center gap-2 font-extrabold"><Lock size={18} /> Change password</div>
         <input
-          type="password" autoComplete="current-password" className={inputCls} placeholder="Current password"
+          aria-label="Current password" type="password" autoComplete="current-password" className={inputCls} placeholder="Current password"
           value={currentPw} onChange={(e) => setCurrentPw(e.target.value)}
         />
         <input
-          type="password" autoComplete="new-password" className={inputCls} placeholder="New password"
+          aria-label="New password" type="password" autoComplete="new-password" className={inputCls} placeholder="New password"
           value={newPw} onChange={(e) => setNewPw(e.target.value)}
         />
         {pwError && <p className="text-rust text-sm">{pwError}</p>}
-        <button disabled={savingPw || !currentPw || !newPw} className="w-full border-[1.5px] border-ink font-bold h-[54px] rounded-2xl disabled:opacity-50">
+        <button disabled={savingPw || !currentPw || !newPw} className="w-full border-[1.5px] border-ink font-bold h-[54px] rounded-2xl disabled:opacity-40">
           {savingPw ? 'Updating...' : 'Update password'}
         </button>
       </form>
 
       <button
         onClick={logout}
-        className="w-full border border-[#cfcab9] bg-white font-bold h-[54px] rounded-2xl mb-8 flex items-center justify-center gap-2"
+        className="w-full border border-[#cfcab9] bg-white font-bold h-[54px] rounded-2xl mb-6 flex items-center justify-center gap-2"
       >
-        <LogOut size={16} /> Log out
+        <LogOut size={17} /> Log out
       </button>
 
-      <form onSubmit={deleteAccount} className="space-y-3">
-        <div className={labelCls}>Danger zone</div>
+      <form onSubmit={deleteAccount} className="bg-rustbg rounded-[24px] p-4 space-y-3">
+        <div className="flex items-center gap-2 font-extrabold text-rust"><Trash2 size={18} /> Delete account</div>
+        <p className="text-sm text-rust/90">This removes you from all groups. You must be settled up first.</p>
         <input
-          type="password" autoComplete="current-password" className={inputCls}
-          placeholder="Enter your password to delete your account"
+          aria-label="Password to confirm" type="password" autoComplete="current-password" className={inputCls}
+          placeholder="Enter your password"
           value={deletePw} onChange={(e) => setDeletePw(e.target.value)}
         />
         {deleteError && <p className="text-rust text-sm">{deleteError}</p>}
-        <button
-          disabled={!deletePw}
-          className="w-full bg-rustbg text-rust font-bold h-[54px] rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <Trash2 size={16} /> Delete my account
+        <button disabled={!deletePw} className="w-full bg-rust text-white font-bold h-[54px] rounded-2xl disabled:opacity-40">
+          Delete my account
         </button>
       </form>
       <BottomNav />
